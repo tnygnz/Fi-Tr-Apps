@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>Sanat — Fince ↔ Türkçe</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="%232f6fed"/><text x="32" y="45" font-size="36" font-family="sans-serif" font-weight="700" fill="%23fff" text-anchor="middle">S</text></svg>'>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">S</span>
+      <div class="brand-text">
+        <strong>Sanat</strong>
+        <small>Fince ↔ Türkçe</small>
+      </div>
+    </div>
+    <div class="streak" title="Günlük seri">
+      <span aria-hidden="true">🔥</span><span id="streakDays">0</span>
+    </div>
+  </header>
+
+  <main id="app" aria-live="polite"></main>
+
+  <nav class="tabs" id="tabs">
+    <button type="button" data-tab="study" class="active"><span>🎴</span>Çalış</button>
+    <button type="button" data-tab="list"><span>📖</span>Liste</button>
+    <button type="button" data-tab="tips"><span>💡</span>İpuçları</button>
+    <button type="button" data-tab="stats"><span>📊</span>İstatistik</button>
+  </nav>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
