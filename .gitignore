@@ -1,2 +1,4 @@
 # TLS özel anahtarı ve sertifika üretim çıktıları — depoya girmez
 cert/
+# Yerel yedek paketleri (git bundle) — depoya girmez
+*.bundle
