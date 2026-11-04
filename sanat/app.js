@@ -67,6 +67,15 @@
     toast._t = setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
   }
 
+  /* Ekran okuyucu duyurusu: tüm ekranı canlı bölge yapmak yerine tek satır.
+     Kısa, tek bir bilgi taşır; kart metni, cevap ve sonuç ayrı ayrı söylenir. */
+  var srStatusEl = document.getElementById("srStatus");
+  var TAB_LABELS = { study: "Çalış", list: "Liste", tips: "İpuçları", stats: "İstatistik" };
+  function announce(msg) {
+    if (!srStatusEl || !msg) return;
+    srStatusEl.textContent = msg;
+  }
+
   /* Günlük telaffuz hedefi ilk kez tutulduğunda kısa kutlama:
      toast + üst bardaki seri sayacında yeşil nabız. Günde bir kez tetiklenir
      (ölçüm öncesi hedef tutmamış, sonrası tutmuş olmalı). */
@@ -1135,6 +1144,19 @@
     html += "</section>";
 
     app.innerHTML = html;
+
+    var ann = "Kart " + (session.i + 1) + "/" + session.queue.length + " · " +
+              promptLang + ": " + prompt;
+    if (session.mode === "kart" && session.revealed) {
+      ann += " · " + answerLang + ": " + answerText;
+    } else if (session.mode === "test" && session.feedback) {
+      ann += session.feedback.chosen === session.feedback.correct
+        ? " · doğru: " + session.feedback.correct
+        : " · yanlış, doğrusu: " + session.feedback.correct;
+    }
+    /* Yazmada geri bildirim kutusu kendi canlı bölgesiyle duyuruyor. */
+    if (!(session.mode === "yaz" && session.feedback)) announce(ann);
+
     var input = document.getElementById("typeInput");
     if (input) input.focus();
   }
@@ -1254,6 +1276,7 @@
           "</div>" +
         "</div>" +
       "</section>";
+    announce("Oturum tamam · " + total + " kart · " + session.ok + " doğru · " + session.bad + " yanlış");
     paintStreak();
   }
 
@@ -1649,6 +1672,7 @@
     }
     window.scrollTo(0, 0);
     renderTab();
+    announce((TAB_LABELS[name] || name) + " sekmesi");
   }
 
   document.getElementById("tabs").addEventListener("click", function (e) {

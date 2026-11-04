@@ -325,6 +325,11 @@ aynı dili konuşur.
   `aria-describedby="typeFeedback"` ile geri bildirime bağlanır, "Kontrol et"
   düğmesi `Cevabı kontrol et`. Geri bildirim kutusu `role="status"` +
   `aria-live="polite"` + `aria-atomic="true"`.
+- **Duyurular tek satır** — `<main>` canlı bölge değil. Kart değişimi,
+  cevabın açılması, test sonucu, oturum özeti ve sekme geçişi yalnızca
+  `#srStatus` üzerinden duyurulur (`role="status"`, `aria-live="polite"`,
+  `aria-atomic="true"`, `.sr-only`); böylece her puanlamada tüm ekran yeniden
+  okunmaz.
 - **Sınır** — bu etiketler DOM taklidi testleriyle doğrulanır; gerçek ekran
   okuyucu ve sesli okuma davranışı tarayıcıda denenmelidir.
 
