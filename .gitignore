@@ -2,3 +2,5 @@
 cert/
 # Yerel yedek paketleri (git bundle) — depoya girmez
 *.bundle
+# Üretilen git format-patch dosyaları — depoya girmez
+patches/
