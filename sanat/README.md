@@ -333,6 +333,28 @@ aynı dili konuşur.
 - **Sınır** — bu etiketler DOM taklidi testleriyle doğrulanır; gerçek ekran
   okuyucu ve sesli okuma davranışı tarayıcıda denenmelidir.
 
+### Elle test — ekran okuyucu
+
+Aşağıdaki adımlar gerçek tarayıcıda, ekran okuyucu açıkken denenir; sağ
+sütundaki metin `#srStatus` bölgesinden **birebir** duyulmalıdır (NVDA +
+Firefox/Chrome, VoiceOver + Safari, TalkBack + Chrome).
+
+| Yapılan | Beklenen duyuru |
+|---|---|
+| Sayfa açılır | sessiz |
+| Çalış → Kart | `Kart 1/20 · Fince: hei` |
+| Cevabı göster | `Kart 1/20 · Fince: hei · Türkçe: merhaba` |
+| Puanla (Tab + Enter) | sonraki kart, kendi kelimesiyle |
+| Test → şık seç | `… · doğru: merhaba` ya da `… · yanlış, doğrusu: merhaba` |
+| Yazma → Kontrol et | yalnız geri bildirim kutusu; cümle bir kez |
+| Son kart → Enter | `Oturum tamam · 20 kart · 16 doğru · 4 yanlış` |
+| Sekme değiştir | `Liste sekmesi` |
+
+Ek kontroller: gezinti modunda sayfa kendiliğinden okunmamalı; her
+puanlamadan sonra tek satır gelmeli; hızlı Enter'larda son kartın metni doğru
+olmalı. Aynı metinli iki kart üst üste gelirse bazı ekran okuyucular ikinci
+anonsu atlar — bilinen sınır.
+
 ## Gizlilik
 
 Analiz edilen Android uygulamasındaki izin setiyle karşılaştırma:
