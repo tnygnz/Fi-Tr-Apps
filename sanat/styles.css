@@ -64,6 +64,23 @@ body {
 button { font: inherit; color: inherit; cursor: pointer; }
 input { font: inherit; }
 
+/* ---------------- satır içi SVG ikon seti ---------------- */
+/* index.html'deki <symbol> tanımları; renk currentColor ile miras alınır. */
+.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ico {
+  width: 1em; height: 1em;
+  display: inline-block;
+  vertical-align: -0.14em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.streak .ico-flame { width: 13px; height: 13px; color: var(--clay); stroke-width: 1.6; }
+.rec-sum-ico .ico { width: 15px; height: 15px; }
+
 /* ---------------- top bar ---------------- */
 .topbar {
   position: sticky;
@@ -176,7 +193,7 @@ input { font: inherit; }
 }
 .mode:active { transform: scale(0.99); }
 .mode:hover { border-color: rgba(29, 75, 57, 0.55); }
-.mode span { grid-row: 1 / 3; font-size: 24px; text-align: center; }
+.mode .ico-mode { grid-row: 1 / 3; width: 22px; height: 22px; justify-self: center; color: var(--blue); stroke-width: 1.35; }
 .mode b { font-size: 15.5px; }
 .mode small { color: var(--muted); font-size: 12.5px; }
 
@@ -267,8 +284,15 @@ input { font: inherit; }
   border: none; background: transparent;
   font-size: 17px; line-height: 1;
   opacity: 0.75;
-  padding: 4px;
+  padding: 6px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px; min-height: 34px;
+  border-radius: 9px;
+  color: var(--ink-soft, var(--text));
 }
+.icon-btn .ico { width: 18px; height: 18px; }
+.icon-btn:hover { background: var(--blue-soft); }
 .icon-btn:hover { opacity: 1; }
 
 .lang {
@@ -475,9 +499,44 @@ input { font: inherit; }
 .tips h2 { font-size: 20px; margin: 12px 0 6px; }
 .tips h3 { font-size: 15px; margin: 24px 0 8px; color: #1d4b39; }
 .tips p { font-size: 14.5px; }
+/* Metin içinde anılan düğme ikonları: cümle akışında kaybolmasın diye
+   harf boyundan biraz büyük, kalın çizgili ve ladin renkli. */
+.tips p .ico-inline {
+  width: 1.2em; height: 1.2em;
+  stroke-width: 1.9;
+  vertical-align: -0.22em;
+  color: var(--blue);
+}
+/* İkon ile düğme adı tek parça: satır sonunda ikon etiketinden kopmaz. */
+.tips p .ico-pair { white-space: nowrap; }
 .tips ul { margin: 0; padding-left: 20px; }
 .tips li { font-size: 14.5px; margin-bottom: 9px; }
 .tips i { color: #1d4b39; font-style: italic; }
+/* Öğrenme yolu: 34 ders, dört aşama */
+.tips h4.path-stage {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: var(--track); text-transform: uppercase;
+  color: var(--blue); margin: 18px 0 6px;
+}
+.path { margin: 0; padding-left: 24px; }
+.path li { font-size: 14.5px; margin-bottom: 5px; }
+.path li b { font-weight: 600; }
+.path li .fin { color: var(--muted); font-style: italic; font-size: 13.5px; }
+/* Kategorisi olan dersler düğme: tek dokunuşla o kategoride oturum açar. */
+.path-go {
+  font: inherit; color: inherit; text-align: left;
+  background: none; border: 0; padding: 0; cursor: pointer;
+}
+.path-go:hover b, .path-go:focus-visible b {
+  text-decoration: underline; text-decoration-thickness: 1px;
+  text-decoration-color: var(--blue); text-underline-offset: 3px;
+}
+.path-go:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
+.path-count {
+  color: var(--blue); font-size: 11.5px; margin-left: 6px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.path li::marker { color: var(--blue); font-variant-numeric: tabular-nums; }
 
 .table { display: grid; gap: 8px; }
 .table > div {
@@ -683,31 +742,48 @@ input { font: inherit; }
 .settings-card label.label-gap { margin-top: 16px; }
 
 /* ---------------- tabs ---------------- */
+/* Sekme çubuğu: kıl çizgi + aktif sekmede alt çizgi göstergesi */
 .tabs {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 30;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  gap: 2px;
+  padding: 6px 10px calc(9px + env(safe-area-inset-bottom));
   background: rgba(244, 241, 233, 0.94);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--line);
 }
 .tabs button {
+  position: relative;
   display: grid;
-  gap: 2px;
+  gap: 4px;
   justify-items: center;
-  padding: 7px 4px;
+  align-content: center;
+  min-height: 48px;
+  padding: 6px 4px 9px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: transparent;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  transition: color 0.15s ease;
 }
-.tabs button span { font-size: 17px; line-height: 1; }
-.tabs button.active { color: #1d4b39; background: var(--blue-soft); }
+.tabs button .ico { width: 20px; height: 20px; opacity: 0.85; stroke-width: 1.4; }
+.tabs button span { font-size: 10.5px; line-height: 1.2; }
+.tabs button.active { color: var(--blue); font-weight: 600; }
+.tabs button.active .ico { opacity: 1; }
+.tabs button.active::after {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 2px;
+  width: 16px; height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: translateX(-50%);
+}
 
 /* ---------------- toast ---------------- */
 .toast {
@@ -732,7 +808,7 @@ input { font: inherit; }
 @media (min-width: 640px) {
   .modes { grid-template-columns: repeat(2, 1fr); }
   .mode { grid-template-columns: 1fr; grid-template-rows: auto auto auto; text-align: center; justify-items: center; }
-  .mode span { grid-row: auto; }
+  .mode .ico-mode { grid-row: auto; width: 24px; height: 24px; }
 }
 
 /* Gün notu: bugünün canlı ilerlemesi */

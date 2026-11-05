@@ -41,37 +41,74 @@ ya da ağ gerekmez ve üretilen HTML denetlenir — duyuru ve görünüm değil.
 
 ## Arayüz turu
 
-Ekran görüntüsü yerine: tek sütun, üstte üst bar, altta dört sekme. Aşağıdaki
-sıra telefonda yukarıdan aşağıya kaydırma sırasıdır.
+Ekran görüntüsü yerine: tek sütun, üstte üst bar, altta dört sekmeli sabit
+çubuk. Aşağıdaki sıra telefonda yukarıdan aşağıya kaydırma sırasıdır.
 
 ```text
-üst bar:        S Sanat · 🔥 3 (günlük seri)
+üst bar:        S Sanat · [alev] 3 (günlük seri)
 sekme içeriği:  seçili sekmenin ekranı, kaydırılır
-alt sekmeler:   🎴 Çalış · 📖 Liste · 💡 İpuçları · 📊 İstatistik
+alt sekmeler:   [kart] Çalış · [liste] Liste · [ampul] İpuçları · [çubuk] İstatistik
 ```
 
+- **İkonlar** — arayüzdeki simgeler emoji değil. `index.html` gövdesinin başında
+  gizli bir `<svg class="svg-sprite">` durur; içinde **10 `<symbol>`** var:
+  `i-study`, `i-list`, `i-tips`, `i-stats`, `i-flame`, `i-speaker`, `i-mic`,
+  `i-kart`, `i-test`, `i-yaz`. Hepsi 24×24 kutuda, 1.5 px çizgi, `fill: none`.
+  Sayfada `<svg class="ico"><use href="#i-…"/></svg>` ile kullanılır; renk
+  `currentColor` olduğu için ikon bulunduğu metnin rengini alır. Tek tanım, tek
+  stil dosyası — ek ikon dosyası, ikon fontu ya da ağ isteği yok. Bütün simgeler
+  `aria-hidden="true" focusable="false"` taşır: ekran okuyucu simgeyi okumaz,
+  anlamı etiket ve `aria-label` verir.
+- **Alt sekme çubuğu** — sayfanın altında sabit; kıl üst çizgi, buzlu cam zemin.
+  Her sekmede 20×20 ikon ve `10.5px` etiket, düğme en az **48 px** yüksek
+  (dokunma hedefi). Aktif sekme ladin renginde ve kalın, ikonunun altında
+  **2 px alt çizgi** gösterir; pasif sekmeler soluk. Sekme değişince yalnızca
+  içerik yenilenir, çubuk yerinde kalır ve `#srStatus` "Liste sekmesi" der.
 - **Çalış** — halka `12/20` bugünkü hedefi gösterir; altında "5 kart tekrar
   bekliyor" ve `Seri: 3 gün · Öğrenilen: 41/599`. Üç mini kutu tekrar / yeni /
   öğrenildi sayısını verir. Zayıf telaffuz listesi varsa burada çıkar
-  (kelimeye dokunup tek başına çalışılır). **Çalışma modu**: 🎴 Kart,
-  ✅ Test, ⌨️ Yazma, 🎤 Telaffuz. Altında "Serbest tekrar (10 kart)" ve
-  **Çeviri yönü** (`FI → TR` / `TR → FI` / `Karışık`).
+  (kelimeye dokunup tek başına çalışılır). **Çalışma modu**: dört satır — solunda
+  22×22 çizgi ikon, sağında başlık ve açıklama: **Kart** (kart ikonu, "Çevir,
+  kendini puanla"), **Test** (onay işareti, "4 seçenekten bul"), **Yazma**
+  (klavye, "Karşılığını yaz"), **Telaffuz** (mikrofon, "Dinle, tekrar et, puan
+  al"). Altında "Serbest tekrar (10 kart)" ve **Çeviri yönü**
+  (`FI → TR` / `TR → FI` / `Karışık`).
 - **Liste** — `Fince veya Türkçe ara…` kutusu, `Tümü` + `Zayıf telaffuz (N)`
   + kategori çipleri, altında Fince–Türkçe satırları.
 - **İpuçları** — "Fince'yi Türkçe bilen biri olarak öğrenmek": ortak noktalar,
-  zor gelen üç konu, telaffuz rehberi, sözlük.
+  zor gelen üç konu, **Öğrenme yolu** (dört aşamaya bölünmüş 34 ders, Türkçe
+  başlık + Fince terim), telaffuz kısa rehberi, telaffuz alıştırması ve sözlük.
+  Öğrenme yolunda uygulamada kategori karşılığı olan 10 ders birer düğme:
+  dokununca o kategorinin kelimeleriyle **Kart** oturumu başlar (sağında kaç
+  kelime olduğu yazar). Gramer dersleri düz metin kalır — olmayan bir şeye
+  dokunulabilir görünümü verilmez.
+  Öğrenme yolunun sırası Argutina-Islamaeva'nın *Suomen kieltä itseopiskeluun*
+  (Petroskoi 2019) kitabının birinci bölümünden; ders metinleri değil yalnızca
+  konu sırası alındı, başlıklar Türkçeleştirildi.
 - **İstatistik** — üstte seri / öğrenildi / doğruluk, ikinci satırda toplam
   cevap / görülen kelime / bugün tekrar; sonra **Son 7 gün** grafiği,
   **Telaffuz eğilimi**, **Telaffuz hedefi** (rekor tablosu + Son oturumlar),
   **En çok zorlanan 5 kelime**, **Kategori ilerlemesi** ve **Ayarlar**
   (günlük hedef, yedek al/yükle).
-- **Oturum ekranı** — üstte ✕ `Oturumu bitir`, ilerleme çubuğu ve `Kart 2 / 20`,
+- **Oturum ekranı** — üstte `Oturumu bitir` (✕ bir metin karakteri, ikon değil),
+  ilerleme çubuğu ve `Kart 2 / 20`,
   hemen altında moda göre değişen tek satırlık klavye ipucu
   (`Enter cevabı kontrol et · Tab ile gezin` gibi);
   ortada kart (kategori çipi + soru). Mod ekleri: Kart'da `Cevabı göster` ve
   dört puanlama düğmesi, Test'te `A–D` seçenekleri, Yazma'da metin kutusu +
-  `Kontrol et`, Telaffuz'da 🔊 dinle + 🎤 tekrar et. Cevaptan sonra `Devam →`.
+  `Kontrol et`, Telaffuz'da hoparlör ikonlu **Dinle** ve mikrofon ikonlu
+  **Tekrar et**. Kartın üstündeki sesli okuma düğmesi de aynı hoparlör
+  ikonunu taşır. Cevaptan sonra `Devam →`.
   Bitince `Oturum tamam` özeti ve `Yeni oturum` düğmesi gelir.
+- **Emojinin kaldığı yerler** — arayüzdeki bütün simgeler çizgi ikon; yalnızca
+  metin içindeki süs emojileri kaldı: kutlama `🎉`, parıltı `✨`, "hedef tutuldu
+  `✓`" ve en uzun seri rozeti `🏆`. Kelime satırlarının sağındaki sesli okuma
+  düğmesi de (`.icon-btn`, 18×18 hoparlör) sprite'tan gelir. İpuçları
+  sekmesindeki telaffuz paragrafı da emoji yerine aynı sprite'tan gelen hoparlör
+  ve mikrofon ikonlarıyla **Dinle** ve **Tekrar et** düğmelerini anıyor
+  (`ico(…, "ico-inline")` ile satır içi; `1.2em` ladin renk, 1.9 px çizgi,
+  `aria-hidden`). İkon ile düğme adı `.ico-pair` içinde `white-space: nowrap`
+  ile bağlı, böylece satır sonunda ikon etiketinden kopmuyor.
 
 ## Klavye kısayolları
 
@@ -97,8 +134,8 @@ okuyucudaki karşılıkları için: **Erişilebilirlik**.
 
 | Dosya | İçerik |
 |---|---|
-| `index.html` | iskelet, üst bar, alt sekmeler |
-| `styles.css` | mobil öncelikli koyu tema |
+| `index.html` | iskelet, ikon sprite'ı (`<symbol>` ×10), üst bar, alt sekmeler |
+| `styles.css` | mobil öncelikli kâğıt zeminli açık tema (Paper & Ink) |
 | `data.js` | kelime listesi (`WORDS`) — düzenlenecek tek yer |
 | `app.js` | SRS, oturum akışı, ekranlar, yedekleme |
 | `tests/` | bağımlılıksız testler: `smoke.test.js`, `kbd-hint.test.js`, `run.js` |
@@ -139,8 +176,9 @@ hedef dolduğunda "Serbest tekrar" ile rastgele 10 kart çalışılabilir.
 
 Kartın üstünde Fince kelime, altında Türkçe anlamı görünür:
 
-1. **🔊 Dinle** — `speechSynthesis` ile `fi-FI` telaffuz.
-2. **🎤 Tekrar et** — mikrofon açılır, `SpeechRecognition` (`fi-FI`) dinler.
+1. **Dinle** (hoparlör ikonu) — `speechSynthesis` ile `fi-FI` telaffuz.
+2. **Tekrar et** (mikrofon ikonu) — mikrofon açılır, `SpeechRecognition`
+   (`fi-FI`) dinler.
 3. Puan = `1 - levenshtein/max(uzunluk)`, `fold()` ile aksan ve büyük/küçük
    harf farkı yok sayılır. %85+ "iyi", %60–84 "yakın", altı "zayıf".
 4. Puan SRS'e işlenir (85+ → Kolay, 60–84 → İyi, altı → Bilmedim).
@@ -310,9 +348,10 @@ aynı dili konuşur.
   ya da `3 kelime hedefiyle yeniden başlat · 04.11.2026 · 2/3 doğru · 1:05`.
 - **Oturum ekranı** — ✕ `Oturumu bitir`; ilerleme çubuğu `role="progressbar"`
   (`aria-valuemin/max/now`); sayaç `Kart 2 / 3`; "Devam" `Sonraki karta geç`.
-- **Sesli okuma** — 🔊 etiketi yöne göre `Kelimeyi Fince sesli oku` /
-  `Kelimeyi Türkçe sesli oku`; telaffuz panelinde `Kelimeyi Fince dinle`.
-- **Telaffuz** — 🎤 `Mikrofonu aç ve kelimeyi Fince tekrar et`;
+- **Sesli okuma** — hoparlör düğmesinin etiketi yöne göre
+  `Kelimeyi Fince sesli oku` / `Kelimeyi Türkçe sesli oku`; telaffuz panelinde
+  `Kelimeyi Fince dinle`. İkon `aria-hidden` olduğu için etiket tek başına yeter.
+- **Telaffuz** — mikrofon düğmesi `Mikrofonu aç ve kelimeyi Fince tekrar et`;
   "Dinliyorum…" ve tanıma sonucu `role="status"` + `aria-live="polite"` ile
   duyurulur.
 - **Test** — seçenek grubu `Seçenekler`, her şık `A seçeneği: …`; cevaptan

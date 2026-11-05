@@ -71,6 +71,12 @@
      Kısa, tek bir bilgi taşır; kart metni, cevap ve sonuç ayrı ayrı söylenir. */
   var srStatusEl = document.getElementById("srStatus");
   var TAB_LABELS = { study: "Çalış", list: "Liste", tips: "İpuçları", stats: "İstatistik" };
+  /* Satır içi SVG ikon seti: index.html içindeki <symbol> tanımlarına başvurur.
+     Emoji yerine geçer; renk ve kalınlık CSS'ten (currentColor) gelir. */
+  function ico(name, cls) {
+    return '<svg class="ico' + (cls ? " " + cls : "") + '" aria-hidden="true" focusable="false">' +
+           '<use href="#i-' + name + '"/></svg>';
+  }
   function announce(msg) {
     if (!srStatusEl || !msg) return;
     srStatusEl.textContent = msg;
@@ -738,7 +744,7 @@
       var current = Math.max(st.current, pronRunDays(st.goal));
       streakHtml =
         '<div class="goal-streak">' +
-          '<span class="streak-pill' + (current ? " warm" : "") + (st.todayMet ? " met" : "") + '">🔥 ' + current + " gün üst üste</span>" +
+          '<span class="streak-pill' + (current ? " warm" : "") + (st.todayMet ? " met" : "") + '">' + ico("flame") + " " + current + " gün üst üste</span>" +
           '<span class="streak-pill">🏆 en uzun ' + record + " gün</span>" +
         "</div>" +
         '<p class="trend-delta' + (st.todayMet ? " up" : "") + '">' +
@@ -1047,7 +1053,7 @@
     html += '<div class="card-head"><span class="chip">' + esc(w.cat) + "</span>";
     html += '<button type="button" class="icon-btn" data-action="speak" data-fi="' + esc(w.fi) +
             '" data-lang="' + headLang + '" title="Sesli oku"' +
-            ' aria-label="' + headLabel + '">🔊</button></div>';
+            ' aria-label="' + headLabel + '">' + ico("speaker") + "</button></div>";
     html += '<p class="lang">' + promptLang + "</p>";
     html += '<h2 class="word">' + esc(prompt) + "</h2>";
 
@@ -1089,10 +1095,10 @@
       if (w.note) html += '<p class="note">' + esc(w.note) + "</p>";
       html += '<div class="pron-actions">';
       html += '<button type="button" class="listen" data-action="speak" data-fi="' + esc(w.fi) +
-              '" data-lang="fi-FI" aria-label="Kelimeyi Fince dinle">🔊 Dinle</button>';
+              '" data-lang="fi-FI" aria-label="Kelimeyi Fince dinle">' + ico("speaker") + " Dinle</button>";
       html += '<button type="button" class="mic' + (micState && micState.status === "listening" ? " on" : "") + '" data-action="listen"' +
               (session.locked ? " disabled" : "") +
-              ' aria-label="Mikrofonu aç ve kelimeyi Fince tekrar et">🎤 Tekrar et</button>';
+              ' aria-label="Mikrofonu aç ve kelimeyi Fince tekrar et">' + ico("mic") + " Tekrar et</button>";
       html += "</div>";
       html += '<p class="muted small">' + (SR ? "Mikrofon yalnızca düğmeye basınca açılır, ses kaydedilmez; tanıma için tarayıcının konuşma servisi kullanılır." : "Bu tarayıcı konuşma tanımayı desteklemiyor: kelimeyi dinle, tekrar et ve kendini puanla.") + "</p>";
       if (micState && micState.status === "listening") html += '<p class="listening" role="status" aria-live="polite">Dinliyorum…</p>';
@@ -1177,7 +1183,7 @@
     var answered = recSummary.ok + recSummary.bad;
     var pct = answered ? Math.round((recSummary.ok / answered) * 100) : 0;
     return '<div class="rec-summary" id="recSummary" role="status">' +
-      '<span class="rec-sum-ico" aria-hidden="true">🎤</span>' +
+      '<span class="rec-sum-ico" aria-hidden="true">' + ico("mic") + "</span>" +
       '<span class="rec-sum-text"><b>Son oturum</b> · ' + recSummary.ok + " doğru · " +
         recSummary.bad + " yanlış · %" + pct +
         '<span class="rec-sum-diff">' + paceText(recSummary) + "</span></span>" +
@@ -1339,10 +1345,10 @@
         weakHtml +
         '<h2 class="section-title">Çalışma modu</h2>' +
         '<div class="modes">' +
-          '<button type="button" class="mode" data-mode="kart"><span>🎴</span><b>Kart</b><small>Çevir, kendini puanla</small></button>' +
-          '<button type="button" class="mode" data-mode="test"><span>✅</span><b>Test</b><small>4 seçenekten bul</small></button>' +
-          '<button type="button" class="mode" data-mode="yaz"><span>⌨️</span><b>Yazma</b><small>Karşılığını yaz</small></button>' +
-          '<button type="button" class="mode" data-mode="telaffuz"><span>🎤</span><b>Telaffuz</b><small>Dinle, tekrar et, puan al</small></button>' +
+          '<button type="button" class="mode" data-mode="kart">' + ico("kart", "ico-mode") + '<b>Kart</b><small>Çevir, kendini puanla</small></button>' +
+          '<button type="button" class="mode" data-mode="test">' + ico("test", "ico-mode") + '<b>Test</b><small>4 seçenekten bul</small></button>' +
+          '<button type="button" class="mode" data-mode="yaz">' + ico("yaz", "ico-mode") + '<b>Yazma</b><small>Karşılığını yaz</small></button>' +
+          '<button type="button" class="mode" data-mode="telaffuz">' + ico("mic", "ico-mode") + '<b>Telaffuz</b><small>Dinle, tekrar et, puan al</small></button>' +
         "</div>" +
 
         '<button type="button" class="ghost-btn wide" data-action="free">Serbest tekrar (10 kart)</button>' +
@@ -1415,7 +1421,7 @@
           (w.note ? '<p class="note">' + esc(w.note) + "</p>" : "") +
         "</div>" +
         '<div class="row-side">' +
-          '<button type="button" class="icon-btn" data-action="speak" data-fi="' + esc(w.fi) + '" data-lang="fi-FI" title="Fince oku">🔊</button>' +
+          '<button type="button" class="icon-btn" data-action="speak" data-fi="' + esc(w.fi) + '" data-lang="fi-FI" title="Fince oku">' + ico("speaker") + '</button>' +
           (weakMode
             ? '<span class="score-pill ' + scoreClass(state.pron[w.fi].last) + '">%' + state.pron[w.fi].last + "</span>"
             : '<div class="dots">' + dots + "</div>") +
@@ -1428,6 +1434,86 @@
   /* ------------------------------------------------------------------ */
   /* Ekran: ipuçları                                                    */
   /* ------------------------------------------------------------------ */
+
+  /* İpuçları → öğrenme yolu: 34 derslik izlence.
+     Sıra ve konular T. Argutina-Islamaeva, Suomen kieltä itseopiskeluun
+     (Petroskoi: Periodika, 2019) kitabının birinci bölümünden; başlıklar
+     Türkçeye çevrildi, ders içerikleri bu uygulamanın kendi listesinden
+     çalışılır. [Türkçe başlık, Fince karşılık] */
+  var PATH_LESSONS = [
+    ["Alfabe ve sesler", "Aakkoset ja äänteet"],
+    ["Kendini anlatmak", "Kertomus itsestäni", "Kalıplar"],
+    ["Karşındakini anlatmak", "Kertomus sinusta"],
+    ["Onu anlatmak", "Kertomus hänestä"],
+    ["Fiillerde kişi ekleri", "Verbien persoonapäätteet", "Fiil Kalıpları"],
+    ["Fiillerde olumsuzluk", "Verbien kieltomuoto"],
+    ["Soru sözcükleri", "Kysymyssanat"],
+    ["Fiil grupları", "Verbiryhmät", "Fiiller"],
+    ["Pekiştirme", "Kertausta"],
+    ["Olumsuz fiil çekimi", "Verbien kieltomuoto"],
+    ["Sayılar", "Lukusanat", "Sayılar"],
+    ["Aile", "Perhe", "Aile"],
+    ["Saat", "Kellonaika", "Zaman"],
+    ["Adessiv (-lla/-llä)", "Adessiivi"],
+    ["Aile söz varlığı", "Perhe"],
+    ["Renkler", "Värit", "Renkler"],
+    ["İç yer hâlleri (-ssa/-stä/-Vn)", "Sisäpaikallissijat", "Şehir"],
+    ["Dış yer hâlleri (-lla/-lta/-lle)", "Ulkopaikallissijat"],
+    ["Kişi adılları yer hâllerinde", "Persoonat paikallissijoissa"],
+    ["İsimlerin çekimi", "Nominien taivutus"],
+    ["Elativ (-sta/-stä)", "Elatiivi"],
+    ["Partitiivi ve anlamları", "Partitiivi ja sen merkitykset"],
+    ["Gıda maddeleri", "Elintarvikkeet", "Yiyecek"],
+    ["Noel", "Joulu"],
+    ["İsim çekimi: çokluk", "Nominien taivutus"],
+    ["Nesne hâlleri: partitiivi / akkusatiivi", "Objektin muodot"],
+    ["İyelik ekleri", "Omistusliitteet"],
+    ["Zarflar", "Adverbit"],
+    ["Zaman anlatımları", "Ajanilmaukset", "Takvim"],
+    ["Genitiv", "Genetiivi"],
+    ["Genitiv: kullanım", "Genetiivi"],
+    ["Zaman yapıları", "Ajanilmaukset"],
+    ["Gerekli bilgiler", "Tarpeellista tietoa"],
+    ["Ünsüz derecelenmesi", "Konsonanttivaihtelut"]
+  ];
+  /* Bir kategoriye düşen kelime sayısı (ders düğmesindeki etiket). */
+  function catCount(cat) {
+    var n = 0;
+    for (var i = 0; i < WORDS.length; i++) if (WORDS[i].cat === cat) n++;
+    return n;
+  }
+
+  /* Kategori oturumu: tekrar zamanı gelenler önce, sonra yeni kelimeler,
+     kalan yer öğrenilmişlerden doldurulur; hedef kart sayısını aşmaz. */
+  function catQueue(cat) {
+    var goal = Math.max(5, Number(state.settings.goal) || 20);
+    var all = WORDS.filter(function (w) { return w.cat === cat; });
+    var due = all.filter(isDue).sort(function (a, b) {
+      return state.cards[a.fi].due - state.cards[b.fi].due;
+    });
+    var news = all.filter(isNew);
+    var rest = shuffle(all.filter(function (w) { return !isDue(w) && !isNew(w); }));
+    return due.concat(news, rest).slice(0, goal);
+  }
+
+  /* Dersleri from–to aralığında numaralı liste olarak basar.
+     Kategorisi olan ders bir düğmedir: tek dokunuşla o kategoride
+     Kart oturumu başlar. Kategorisi olmayan ders düz metin kalır. */
+  function lessonPath(from, to) {
+    var html = '<ol class="path" start="' + from + '">';
+    for (var i = from; i <= to; i++) {
+      var l = PATH_LESSONS[i - 1];
+      var body = "<b>" + l[0] + '</b> <span class="fin">' + l[1] + "</span>";
+      if (l[2] && catCount(l[2])) {
+        html += '<li><button type="button" class="path-go" data-lesson="' + esc(l[2]) + '"' +
+          ' title="' + esc(l[2]) + ' kategorisiyle çalış">' + body +
+          '<span class="path-count">' + catCount(l[2]) + " kelime</span></button></li>";
+      } else {
+        html += "<li>" + body + "</li>";
+      }
+    }
+    return html + "</ol>";
+  }
 
   function renderTips() {
     app.innerHTML =
@@ -1451,6 +1537,17 @@
           "<li><b>Fiil çekimi:</b> Kişi eki var (<i>olen, olet, on</i>), olumsuzluk ayrı bir fiille yapılır: <i>en, et, ei, emme, ette, eivät</i> + kök. Gelecek zaman yok; şimdiki zaman yeterli.</li>" +
         "</ul>" +
 
+        '<h3>Öğrenme yolu: 34 ders</h3>' +
+        '<p class="muted">Sıra, Argutina-Islamaeva\'nın <i>Suomen kieltä itseopiskeluun</i> (Petroskoi 2019) kitabının birinci bölümünden; başlıklar Türkçeye çevrildi. Ders konusu, bu uygulamadaki karşılık gelen kategoriyle birlikte çalışılınca oturuyor; acele etmeden aşama aşama ilerle.</p>' +
+        '<h4 class="path-stage">Aşama 1 · ders 1–10: temel cümle ve fiil</h4>' +
+        lessonPath(1, 10) +
+        '<h4 class="path-stage">Aşama 2 · ders 11–16: günlük hayat</h4>' +
+        lessonPath(11, 16) +
+        '<h4 class="path-stage">Aşama 3 · ders 17–22: yer ve miktar hâlleri</h4>' +
+        lessonPath(17, 22) +
+        '<h4 class="path-stage">Aşama 4 · ders 23–34: nesne, iyelik, zaman, ses değişimi</h4>' +
+        lessonPath(23, 34) +
+
         '<h3>Telaffuz kısa rehberi</h3>' +
         '<div class="table">' +
           "<div><b>ä</b><span>Türkçedeki 'e' ile 'a' arası, açık e (æ)</span></div>" +
@@ -1464,7 +1561,7 @@
         "</div>" +
 
         '<h3>Telaffuz alıştırması</h3>' +
-        '<p class="muted">Çalış ekranındaki <b>Telaffuz</b> modunda önce 🔊 ile kelimeyi dinle, sonra 🎤 ile tekrar et. Puan, duyulan metinle beklenen kelimenin harf düzeyinde karşılaştırmasıyla hesaplanır; aksan işaretleri yok sayıldığı için %85 üstü “iyi”, %60–84 “yakın” sayılır. Tanıma servisi aksanlı söyleyişte kelimeyi eksik yazabilir — puanı kesin ölçü değil, tekrar sinyali olarak gör.</p>' +
+        '<p class="muted">Çalış ekranındaki <b>Telaffuz</b> modunda önce <span class="ico-pair">' + ico("speaker", "ico-inline") + '&nbsp;<b>Dinle</b></span> düğmesiyle kelimeyi Fince duy, sonra <span class="ico-pair">' + ico("mic", "ico-inline") + '&nbsp;<b>Tekrar et</b></span> düğmesiyle aynı kelimeyi kendin söyle. Puan, duyulan metinle beklenen kelimenin harf düzeyinde karşılaştırmasıyla hesaplanır; aksan işaretleri yok sayıldığı için %85 üstü “iyi”, %60–84 “yakın” sayılır. Tanıma servisi aksanlı söyleyişte kelimeyi eksik yazabilir — puanı kesin ölçü değil, tekrar sinyali olarak gör.</p>' +
         '<p class="muted">Puanı %60 altında kalan kelimeler çalış ekranındaki <b>Zayıf telaffuz</b> listesine düşer; tek dokunuşla yalnızca onlardan oturum başlatabilirsin. %60 ve üzeri puan alan kelime listeden çıkar.</p>' +
 
         '<h3>Sözlük</h3>' +
@@ -1686,6 +1783,17 @@
     var modeBtn = t.closest("[data-mode]");
     if (modeBtn) { startSession(modeBtn.getAttribute("data-mode")); return; }
 
+    /* İpuçları → öğrenme yolu: ders düğmesi, kendi kategorisinde oturum açar. */
+    var lessonBtn = t.closest("[data-lesson]");
+    if (lessonBtn) {
+      var lessonCat = lessonBtn.getAttribute("data-lesson");
+      var lessonQueue = catQueue(lessonCat);
+      if (!lessonQueue.length) { toast(lessonCat + " için kelime yok."); return; }
+      toast(lessonCat + " · " + lessonQueue.length + " kelime");
+      startSession("kart", lessonQueue, "tips");
+      return;
+    }
+
     var recRow = t.closest("[data-rec-goal]");
     if (recRow) { goalSession(recRow.getAttribute("data-rec-goal")); return; }
 
@@ -1745,7 +1853,9 @@
           );
         }
         session = null;
-        if (quitBack === "records") backToRecords(); else setTab("study");
+        if (quitBack === "records") backToRecords();
+        else if (quitBack === "tips") setTab("tips");
+        else setTab("study");
         return;
       }
       if (action === "reveal") { session.revealed = true; renderSession(); return; }
