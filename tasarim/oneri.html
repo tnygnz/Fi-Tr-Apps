@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanat · Tasarım yönü 01 — Paper &amp; Ink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --board: #E7E1D4;
+    --board-ink: #2A2C28;
+    --board-muted: #6F6A5E;
+    --paper: #F4F1E9;
+    --surface: #FBFAF5;
+    --ink: #14171A;
+    --ink-soft: #3C413D;
+    --muted: #6F6B60;
+    --line: #E1DBCC;
+    --line-strong: #CEC6B2;
+    --spruce: #1D4B39;
+    --spruce-ink: #102A20;
+    --clay: #A5542F;
+    --sage: #DDE7DD;
+    --serif: "Fraunces", "Iowan Old Style", Palatino, Georgia, serif;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  html, body { margin: 0; }
+  body {
+    background: var(--board);
+    color: var(--board-ink);
+    font-family: var(--sans);
+    padding: 40px 36px 56px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- board header ---------- */
+  .board { max-width: 1760px; margin: 0 auto 34px; display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-end; justify-content: space-between; }
+  .board-id { display: flex; align-items: center; gap: 16px; }
+  .monogram {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: var(--spruce); color: #F7F4EC;
+    display: grid; place-items: center;
+    font-family: var(--serif); font-size: 27px; font-weight: 600;
+    box-shadow: 0 8px 20px rgba(29, 75, 57, .22);
+  }
+  .board h1 { font-family: var(--serif); font-size: 30px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 4px; }
+  .board p { margin: 0; color: var(--board-muted); font-size: 13px; letter-spacing: .01em; }
+  .board-meta { display: flex; gap: 26px; }
+  .board-meta div { font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--board-muted); }
+  .board-meta b { display: block; font-size: 13px; letter-spacing: .01em; text-transform: none; color: var(--board-ink); margin-top: 5px; font-weight: 500; }
+
+  /* ---------- stage ---------- */
+  .stage { max-width: 1760px; margin: 0 auto; display: flex; gap: 44px; flex-wrap: wrap; }
+  figure { margin: 0; }
+  .device {
+    width: 390px; height: 800px; padding: 9px;
+    border-radius: 46px;
+    background: linear-gradient(160deg, #20221F, #0C0D0C);
+    box-shadow: 0 26px 60px rgba(38, 34, 26, .28), 0 2px 0 rgba(255, 255, 255, .06) inset;
+  }
+  .screen {
+    width: 100%; height: 100%; border-radius: 38px; overflow: hidden;
+    background: var(--paper); color: var(--ink);
+    display: flex; flex-direction: column;
+    position: relative;
+    font-size: 15px;
+  }
+  figcaption { margin-top: 16px; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--board-muted); }
+  figcaption b { color: var(--board-ink); font-weight: 600; }
+
+  .theme-ink {
+    --paper: #0F1312;
+    --surface: #161B19;
+    --ink: #EDEAE1;
+    --ink-soft: #C9C6BC;
+    --muted: #8D978F;
+    --line: #232B27;
+    --line-strong: #2F3833;
+    --spruce: #8FC7A9;
+    --spruce-ink: #C3E5D3;
+    --clay: #D08A63;
+    --sage: #1A2A22;
+  }
+
+  /* ---------- shared screen chrome ---------- */
+  .status {
+    height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 26px; font-size: 11.5px; font-weight: 600; color: var(--ink-soft);
+    letter-spacing: .02em;
+  }
+  .status span:last-child { letter-spacing: .06em; opacity: .75; }
+
+  .topbar { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 4px 22px 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .mark {
+    width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+    background: var(--spruce); color: #F7F4EC; font-family: var(--serif); font-size: 16px; font-weight: 600;
+  }
+  .brand .name { font-size: 13.5px; font-weight: 600; letter-spacing: .01em; }
+  .brand .sub { display: block; font-size: 10.5px; font-weight: 400; color: var(--muted); letter-spacing: .04em; margin-top: 1px; }
+  .streak {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 500; color: var(--ink-soft);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .streak i { width: 6px; height: 6px; border-radius: 50%; background: var(--clay); display: block; }
+
+  .body { flex: 1 1 auto; overflow: hidden; padding: 0 22px; display: flex; flex-direction: column; }
+  .rule { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+  .eyebrow {
+    font-size: 10px; letter-spacing: .17em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+  /* ---------- 01 home ---------- */
+  .date-row { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 0 10px; }
+  .greeting { font-family: var(--serif); font-size: 33px; line-height: 1.05; letter-spacing: -.022em; font-weight: 600; margin: 11px 0 5px; }
+  .greeting em { font-style: italic; font-weight: 400; color: var(--spruce); }
+  .subline { color: var(--muted); font-size: 12.5px; margin: 0 0 17px; }
+
+  .rail-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+  .rail-head .big { font-family: var(--serif); font-size: 26px; letter-spacing: -.02em; }
+  .rail-head .big small { font-family: var(--sans); font-size: 12.5px; font-weight: 500; color: var(--muted); letter-spacing: .02em; margin-left: 6px; }
+  .rail { height: 5px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .rail > i { display: block; height: 100%; width: 60%; border-radius: 999px; background: var(--spruce); }
+
+  .cta {
+    margin-top: 16px; width: 100%; border: 0; border-radius: 13px;
+    background: var(--spruce); color: #F7F4EC;
+    padding: 14px 18px; font-family: var(--sans); font-size: 14.5px; font-weight: 600; letter-spacing: .01em;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 10px 22px rgba(29, 75, 57, .24);
+  }
+  .cta span:last-child { opacity: .6; font-weight: 400; }
+  .ghost {
+    margin-top: 8px; width: 100%; border: 1px solid var(--line-strong); background: transparent;
+    color: var(--ink-soft); border-radius: 13px; padding: 11px 18px;
+    font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .section-label { display: flex; align-items: center; gap: 12px; margin: 17px 0 2px; }
+  .section-label .eyebrow { white-space: nowrap; }
+  .section-label .rule { flex: 1; }
+
+  .modes { display: flex; flex-direction: column; }
+  .mode {
+    display: flex; align-items: center; gap: 13px;
+    padding: 9px 2px; border-bottom: 1px solid var(--line);
+  }
+  .mode:last-child { border-bottom: 0; }
+  .mode .ico { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 9px; background: var(--sage); color: var(--spruce); }
+  .mode .t { font-size: 14px; font-weight: 500; }
+  .mode .d { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .mode .chev { margin-left: auto; color: var(--line-strong); font-size: 15px; }
+
+  .footer-stats { display: flex; gap: 0; margin-top: auto; padding: 11px 0 9px; border-top: 1px solid var(--line); }
+  .footer-stats div { flex: 1; }
+  .footer-stats b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  .footer-stats span { font-size: 10.5px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+
+  /* ---------- tabs ---------- */
+  .tabs {
+    flex: none; display: flex; justify-content: space-between;
+    padding: 12px 26px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line); background: var(--surface);
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; letter-spacing: .04em; color: var(--muted); }
+  .tab svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.4; }
+  .tab.on { color: var(--spruce); font-weight: 600; }
+  .tab.on::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--spruce); }
+
+  /* ---------- 02/03 session ---------- */
+  .sess-top { display: flex; align-items: center; gap: 14px; padding: 10px 0 0; }
+  .sess-top .x { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; border: 1px solid var(--line); color: var(--ink-soft); }
+  .sess-top .rail { flex: 1; height: 3px; }
+  .sess-top .rail > i { width: 10%; }
+  .sess-top .count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+
+  .card-face { padding-top: 34px; display: flex; flex-direction: column; height: 100%; }
+  .cat { display: inline-flex; align-self: flex-start; align-items: center; gap: 7px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .cat::before { content: ""; width: 14px; height: 1px; background: var(--clay); }
+  .word { font-family: var(--serif); font-size: 62px; line-height: 1.02; letter-spacing: -.03em; font-weight: 600; margin: 26px 0 10px; }
+  .phon { font-size: 12.5px; color: var(--muted); letter-spacing: .03em; display: flex; align-items: center; gap: 8px; }
+  .phon .spk { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; color: var(--ink-soft); font-size: 9px; }
+
+  .answer-zone { margin-top: auto; }
+  .answer-zone .label { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+  .answer { font-family: var(--serif); font-size: 30px; letter-spacing: -.02em; margin: 0 0 6px; }
+  .note { font-size: 12px; color: var(--muted); margin: 0 0 20px; line-height: 1.5; }
+
+  .reveal {
+    width: 100%; border: 1px solid var(--spruce); background: transparent; color: var(--spruce);
+    border-radius: 13px; padding: 15px; font-size: 14px; font-weight: 600; letter-spacing: .01em;
+  }
+
+  .ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 18px 0 14px; }
+  .rating {
+    border: 1px solid var(--line-strong); border-radius: 11px; padding: 11px 6px 9px;
+    text-align: center; background: var(--surface);
+  }
+  .rating .k { display: block; font-size: 9.5px; letter-spacing: .13em; color: var(--muted); margin-bottom: 5px; }
+  .rating .v { font-size: 12.5px; font-weight: 600; }
+  .rating.good { border-color: var(--spruce); background: var(--sage); color: var(--spruce-ink); }
+  .rating.good .k { color: var(--spruce); opacity: .75; }
+
+  .hintbar { display: flex; justify-content: space-between; align-items: center; padding: 0 2px 18px; font-size: 10.5px; color: var(--muted); letter-spacing: .03em; }
+  .hintbar kbd { font-family: var(--sans); border: 1px solid var(--line-strong); border-radius: 5px; padding: 1px 5px; font-size: 10px; color: var(--ink-soft); }
+
+  /* ---------- 04 stats ---------- */
+  .stat-hero { display: flex; align-items: flex-end; gap: 12px; padding: 22px 0 6px; }
+  .stat-hero .n { font-family: var(--serif); font-size: 62px; line-height: .9; letter-spacing: -.035em; }
+  .stat-hero .u { font-size: 12px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; padding-bottom: 8px; }
+  .stat-sub { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+
+  .seg { display: inline-flex; gap: 18px; margin: 22px 0 4px; }
+  .seg span { font-size: 11.5px; letter-spacing: .05em; color: var(--muted); padding-bottom: 7px; }
+  .seg span.on { color: var(--ink); border-bottom: 1px solid var(--spruce); font-weight: 600; }
+
+  .chart { display: flex; align-items: flex-end; gap: 10px; height: 86px; margin: 16px 0 8px; }
+  .chart i { flex: 1; border-radius: 3px 3px 2px 2px; background: var(--line-strong); opacity: .7; }
+  .chart i.hot { background: var(--spruce); opacity: 1; }
+  .chart-x { display: flex; gap: 10px; font-size: 9.5px; color: var(--muted); letter-spacing: .06em; }
+  .chart-x span { flex: 1; text-align: center; }
+
+  .kv { display: flex; align-items: baseline; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .kv:last-child { border-bottom: 0; }
+  .kv b { font-weight: 600; font-size: 13px; }
+  .kv .track { flex: 1; height: 3px; background: var(--line); border-radius: 999px; margin: 0 14px; overflow: hidden; }
+  .kv .track i { display: block; height: 100%; background: var(--clay); border-radius: 999px; }
+  .mini-note { font-size: 11px; color: var(--muted); margin: 14px 0 0; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<header class="board">
+  <div class="board-id">
+    <div class="monogram">S</div>
+    <div>
+      <h1>Sanat — “Paper &amp; Ink”</h1>
+      <p>Tasarım yönü 01 · editoryal serif, kâğıt dokusu, tek vurgu rengi</p>
+    </div>
+  </div>
+  <div class="board-meta">
+    <div>Gündüz paleti<b>#F4F1E9 · #14171A · #1D4B39</b></div>
+    <div>Gece paleti<b>#0F1312 · #EDEAE1 · #8FC7A9</b></div>
+    <div>Tipografi<b>Fraunces · Inter</b></div>
+  </div>
+</header>
+
+<div class="stage">
+
+  <!-- 01 HOME -->
+  <figure>
+    <div class="device">
+      <div class="screen">
+        <div class="status"><span>9:41</span><span>5G · 82</span></div>
+        <div class="topbar">
+          <div class="brand">
+            <div class="mark">S</div>
+            <div>
+              <span class="name">Sanat</span>
+              <span class="sub">Fince ↔ Türkçe</span>
+            </div>
+          </div>
+          <div class="streak"><i></i> 3 gün</div>
+        </div>
+        <div class="body">
+          <div class="date-row">
+            <span class="eyebrow">Çarşamba · 5 Kasım</span>
+            <span class="eyebrow num">Hedef 20</span>
+          </div>
+          <hr class="rule">
+          <h2 class="greeting">İyi akşamlar,<br><em>jatketaan.</em></h2>
+          <p class="subline">Bugün 12 kart · kalan 8 kart, yaklaşık 4 dakika</p>
+
+          <div class="rail-head">
+            <div class="big num">12<small>/ 20 kart</small></div>
+            <div class="eyebrow num">%60</div>
+          </div>
+          <div class="rail"><i></i></div>
+
+          <button class="cta"><span>Çalışmaya devam et</span><span>→</span></button>
+          <button class="ghost"><span>Serbest tekrar</span><span class="eyebrow">10 kart</span></button>
+
+          <div class="section-label"><span class="eyebrow">Mod</span><hr class="rule"></div>
+          <div class="modes">
+            <div class="mode">
+              <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M18 8h2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-2"/></svg></span>
+              <div><div class="t">Kart</div><div class="d">Çevir, kendini puanla</div></div>
+              <span class="chev">›</span>
+            </div>
+            <div class="mode">
+              <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6 9 17l-5-5"/></svg></span>
+              <div><div class="t">Test</div><div class="d">Dört seçenekten bul</div></div>
+              <span class="chev">›</span>
+            </div>
+            <div class="mode">
+              <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M6 11h.01M10 11h.01M14 11h.01M18 11h.01M7 15h10"/></svg></span>
+              <div><div class="t">Yazma</div><div class="d">Karşılığını yaz</div></div>
+              <span class="chev">›</span>
+            </div>
+            <div class="mode">
+              <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+              <div><div class="t">Telaffuz</div><div class="d">Dinle, tekrar et, puan al</div></div>
+              <span class="chev">›</span>
+            </div>
+          </div>
+
+          <div class="footer-stats">
+            <div><b class="num">5</b><span>Tekrar</span></div>
+            <div><b class="num">41</b><span>Öğrenildi</span></div>
+            <div><b class="num">%86</b><span>Doğruluk</span></div>
+          </div>
+        </div>
+        <nav class="tabs">
+          <div class="tab on"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M18 8h2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-2"/></svg>Çalış</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Liste</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3ZM9 21h6"/></svg>İpuçları</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>İstatistik</div>
+        </nav>
+      </div>
+    </div>
+    <figcaption><b>01 · Çalış</b> — halka yerine ince ray, tek baskın eylem</figcaption>
+  </figure>
+
+  <!-- 02 SESSION REVEAL -->
+  <figure>
+    <div class="device">
+      <div class="screen">
+        <div class="status"><span>9:41</span><span>5G · 82</span></div>
+        <div class="body">
+          <div class="sess-top">
+            <span class="x">✕</span>
+            <div class="rail"><i></i></div>
+            <span class="count">1 / 20</span>
+          </div>
+
+          <div class="card-face">
+            <span class="cat">Selamlaşma</span>
+            <div class="word">sanoa</div>
+            <div class="phon"><span class="spk">▸</span> fi-FI · “sa-no-a”</div>
+
+            <div class="answer-zone">
+              <hr class="rule" style="margin: 0 0 16px;">
+              <div class="label">Türkçe</div>
+              <p class="answer">söylemek</p>
+              <p class="note">Arkadaşlar arasında en sık kullanılan temel fiil.</p>
+              <button class="reveal">Cevabı göster</button>
+              <div class="hintbar" style="padding-top: 14px"><span>Dokun ve kendini puanla</span><span><kbd>boşluk</kbd></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>02 · Kart</b> — kelime 62 px serif, soluk ipucu satırı</figcaption>
+  </figure>
+
+  <!-- 03 RATINGS -->
+  <figure>
+    <div class="device">
+      <div class="screen">
+        <div class="status"><span>9:41</span><span>5G · 82</span></div>
+        <div class="body">
+          <div class="sess-top">
+            <span class="x">✕</span>
+            <div class="rail"><i style="width:25%"></i></div>
+            <span class="count">5 / 20</span>
+          </div>
+
+          <div class="card-face">
+            <span class="cat">Seyahat</span>
+            <div class="word">asema</div>
+            <div class="phon"><span class="spk">▸</span> fi-FI · “a-se-ma”</div>
+
+            <div class="answer-zone">
+              <hr class="rule" style="margin: 0 0 16px;">
+              <div class="label">Türkçe</div>
+              <p class="answer">istasyon</p>
+              <p class="note">Tren ve otobüs durağı için kullanılır.</p>
+
+              <div class="ratings">
+                <div class="rating"><span class="k">1</span><span class="v">Tekrar</span></div>
+                <div class="rating"><span class="k">2</span><span class="v">Zor</span></div>
+                <div class="rating good"><span class="k">3</span><span class="v">İyi</span></div>
+                <div class="rating"><span class="k">4</span><span class="v">Kolay</span></div>
+              </div>
+              <div class="hintbar"><span>Bir sonraki kart 5 saniye içinde</span><span>duraklat</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b>03 · Puanlama</b> — dört eşit kutu, seçili olan tek renk</figcaption>
+  </figure>
+
+  <!-- 04 STATS DARK -->
+  <figure>
+    <div class="device">
+      <div class="screen theme-ink">
+        <div class="status"><span>9:41</span><span>5G · 82</span></div>
+        <div class="topbar">
+          <div class="brand">
+            <div class="mark">S</div>
+            <div>
+              <span class="name">İstatistik</span>
+              <span class="sub">Son 7 gün</span>
+            </div>
+          </div>
+          <div class="streak"><i></i> 3 gün</div>
+        </div>
+        <div class="body">
+          <div class="stat-hero">
+            <div class="n num">112</div>
+            <div class="u">kart / hafta</div>
+          </div>
+          <p class="stat-sub">Günde ortalama 16 kart · hedefin %80’i</p>
+
+          <div class="seg">
+            <span class="on">Hafta</span><span>Ay</span><span>Yıl</span>
+          </div>
+          <hr class="rule">
+
+          <div class="chart">
+            <i style="height:38%"></i><i style="height:54%"></i><i style="height:31%"></i>
+            <i style="height:72%"></i><i style="height:60%"></i><i style="height:84%"></i>
+            <i class="hot" style="height:100%"></i>
+          </div>
+          <div class="chart-x"><span>P</span><span>S</span><span>Ç</span><span>P</span><span>C</span><span>C</span><span>P</span></div>
+
+          <div class="section-label"><span class="eyebrow">İlerleme</span><hr class="rule"></div>
+          <div class="kv"><span>Öğrenilen</span><span class="track"><i style="width:7%"></i></span><b class="num">41 / 599</b></div>
+          <div class="kv"><span>Doğruluk</span><span class="track"><i style="width:86%; background:var(--spruce)"></i></span><b class="num">%86</b></div>
+          <div class="kv"><span>En uzun seri</span><span class="track"><i style="width:45%"></i></span><b class="num">9 gün</b></div>
+
+          <div class="section-label"><span class="eyebrow">Zorlanan</span><hr class="rule"></div>
+          <div class="kv"><span>sanoa</span><span class="track"><i style="width:32%"></i></span><b class="num">%32</b></div>
+          <div class="kv"><span>asema</span><span class="track"><i style="width:48%"></i></span><b class="num">%48</b></div>
+          <p class="mini-note">Gece modu aynı token setinin ters çevrilmiş hâli; vurgu rengi açık yeşile döner, kontrast korunur.</p>
+        </div>
+        <nav class="tabs">
+          <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M18 8h2a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-2"/></svg>Çalış</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Liste</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3ZM9 21h6"/></svg>İpuçları</div>
+          <div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>İstatistik</div>
+        </nav>
+      </div>
+    </div>
+    <figcaption><b>04 · İstatistik</b> — gece paleti, ince çubuklar, tabular sayılar</figcaption>
+  </figure>
+
+</div>
+</body>
+</html>
