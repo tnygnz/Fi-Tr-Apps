@@ -49,23 +49,67 @@ for p in sys.argv[2].split("."):
 print(d if isinstance(d, str) and d else "")' "$1" "$2"
 }
 
-# --- 1) uzak taban -------------------------------------------------------
-git fetch -q origin "$BRANCH" 2>/dev/null || die "origin/$BRANCH alinamadi (git remote / ag)" 2
-TABAN=$(git rev-parse "origin/$BRANCH" 2>/dev/null) || die "origin/$BRANCH cozulemedi" 2
+# --- 1) hedef taban: yayin deposunun dal ucu -----------------------------
+# Karsilastirma bu deponun origin'i ile degil, yayin deposunun (REPO) dal
+# ucuyla yapilir; boylece commit'lenmis degisiklikler de yayina girer.
+CFG=$(mktemp) || die "gecici dosya acilamadi" 2
+chmod 600 "$CFG"
+if [ -n "${GH_TOKEN:-}" ]; then
+  printf 'header = "Authorization: Bearer %s"\nheader = "Accept: application/vnd.github+json"\nheader = "X-GitHub-Api-Version: 2022-11-28"\n' \
+    "$GH_TOKEN" >"$CFG"
+else
+  printf 'header = "Accept: application/vnd.github+json"\nheader = "X-GitHub-Api-Version: 2022-11-28"\n' >"$CFG"
+fi
+TMP=$(mktemp -d) || die "gecici dizin acilamadi" 2
+trap 'rm -f "$CFG"; rm -rf "$TMP"' EXIT
+
+api() { # api YONTEM YOL CIKTI [GOVDE]  -> HTTP kodu
+  local yontem=$1 yol=$2 cikti=$3 govde=${4:-}
+  if [ -n "$govde" ]; then
+    curl -sS -m 60 --config "$CFG" -X "$yontem" -H "Content-Type: application/json" \
+      --data @"$govde" -o "$cikti" -w '%{http_code}' "$API$yol"
+  else
+    curl -sS -m 60 --config "$CFG" -X "$yontem" -o "$cikti" -w '%{http_code}' "$API$yol"
+  fi
+}
+
+kod=$(api GET "/git/ref/heads/$BRANCH" "$TMP/ref.json")
+[ "$kod" = "200" ] || die "uzak dal okunamadi: $REPO/$BRANCH (HTTP $kod): $(head -c 200 "$TMP/ref.json")" 2
+TABAN=$(jget "$TMP/ref.json" "object.sha")
+[ -n "$TABAN" ] || die "uzak dal sha alinamadi" 2
+
+kod=$(api GET "/git/trees/$TABAN?recursive=1" "$TMP/agac-uzak.json")
+[ "$kod" = "200" ] || die "uzak agac okunamadi (HTTP $kod): $(head -c 200 "$TMP/agac-uzak.json")" 2
+
+python3 - "$TMP/agac-uzak.json" "$DAL" >"$TMP/uzak.txt" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1], encoding="utf-8"))
+dal = sys.argv[2].rstrip("/") + "/"
+for e in d.get("tree", []):
+    if e.get("type") == "blob" and str(e.get("path", "")).startswith(dal):
+        print("%s\t%s" % (e["path"], e["sha"]))
+PY
 
 # --- 2) degisen ve silinen dosyalar -------------------------------------
+declare -A UZAK_SHA=()
+while IFS=$'\t' read -r yol sha; do
+  [ -n "$yol" ] && UZAK_SHA["$yol"]=$sha
+done <"$TMP/uzak.txt"
+
 DEGISEN=()
 while IFS= read -r f; do
-  [ -n "$f" ] && [ -f "$f" ] && DEGISEN+=("$f")
-done < <(
-  { git diff --name-only "origin/$BRANCH" -- "$DAL"
-    git ls-files --others --exclude-standard -- "$DAL"; } | sort -u
-)
+  [ -n "$f" ] && [ -f "$f" ] || continue
+  yerel=$(git hash-object "$f" 2>/dev/null || echo "?")
+  [ "${UZAK_SHA[$f]:-}" = "$yerel" ] || DEGISEN+=("$f")
+done < <(git ls-files --cached --others --exclude-standard -- "$DAL" | sort -u)
 
 SILINEN=()
-while IFS= read -r f; do
-  [ -n "$f" ] && [ ! -f "$f" ] && SILINEN+=("$f")
-done < <(git ls-tree -r --name-only "origin/$BRANCH" -- "$DAL")
+for yol in "${!UZAK_SHA[@]}"; do
+  [ -f "$yol" ] || SILINEN+=("$yol")
+done
+if [ "${#SILINEN[@]}" -gt 0 ]; then
+  mapfile -t SILINEN < <(printf '%s\n' "${SILINEN[@]}" | sort)
+fi
 
 say "Depo : $REPO · dal: $BRANCH · taban: ${TABAN:0:12}"
 say "Dizin: $DAL/ · degisen: ${#DEGISEN[@]} · uzakta olup yerelde olmayan: ${#SILINEN[@]}"
@@ -119,23 +163,6 @@ Yapilacaklar:
   2) Bu projede Settings -> Secrets -> GH_TOKEN olarak ekle (sohbete YAPISTIRMA)
   3) Yeni oturumda:  ./yayinla.sh \"mesaj\"" 3
 
-CFG=$(mktemp) || die "gecici dosya acilamadi" 2
-chmod 600 "$CFG"
-printf 'header = "Authorization: Bearer %s"\nheader = "Accept: application/vnd.github+json"\nheader = "X-GitHub-Api-Version: 2022-11-28"\n' \
-  "$GH_TOKEN" >"$CFG"
-TMP=$(mktemp -d) || die "gecici dizin acilamadi" 2
-trap 'rm -f "$CFG"; rm -rf "$TMP"' EXIT
-
-api() { # api YONTEM YOL CIKTI [GOVDE]  -> HTTP kodu
-  local yontem=$1 yol=$2 cikti=$3 govde=${4:-}
-  if [ -n "$govde" ]; then
-    curl -sS -m 60 --config "$CFG" -X "$yontem" -H "Content-Type: application/json" \
-      --data @"$govde" -o "$cikti" -w '%{http_code}' "$API$yol"
-  else
-    curl -sS -m 60 --config "$CFG" -X "$yontem" -o "$cikti" -w '%{http_code}' "$API$yol"
-  fi
-}
-
 # --- 6) tek commit ------------------------------------------------------
 say ""
 say "Yayinlaniyor..."
@@ -143,8 +170,10 @@ COMMIT=""
 deneme=0
 while [ "$deneme" -lt 3 ]; do
   deneme=$((deneme + 1))
-  git fetch -q origin "$BRANCH" 2>/dev/null || true
-  TABAN=$(git rev-parse "origin/$BRANCH") || die "origin/$BRANCH cozulemedi" 2
+  kod=$(api GET "/git/ref/heads/$BRANCH" "$TMP/ref.json")
+  [ "$kod" = "200" ] || die "uzak dal okunamadi (HTTP $kod): $(head -c 200 "$TMP/ref.json")" 1
+  TABAN=$(jget "$TMP/ref.json" "object.sha")
+  [ -n "$TABAN" ] || die "uzak dal sha alinamadi" 1
 
   kod=$(api GET "/git/commits/$TABAN" "$TMP/taban.json")
   [ "$kod" = "200" ] || die "taban commit okunamadi (HTTP $kod): $(head -c 200 "$TMP/taban.json")" 1
@@ -220,24 +249,27 @@ say "  site  : $SAYFA (Pages 1-3 dakikada guncellenir)"
 # --- 7) uzak dogrulama ---------------------------------------------------
 say ""
 say "Uzak dogrulama:"
-git fetch -q origin "$BRANCH" 2>/dev/null || true
 hata=0
 for f in "${DEGISEN[@]}"; do
-  uzak=$(git rev-parse "origin/$BRANCH:$f" 2>/dev/null || echo "?")
+  yol=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' "$f")
+  kod=$(api GET "/contents/$yol?ref=$BRANCH" "$TMP/kontrol.json")
+  uzak=$(jget "$TMP/kontrol.json" "sha")
   yerel=$(git hash-object "$f" 2>/dev/null || echo "?")
-  if [ "$uzak" = "$yerel" ] && [ "$uzak" != "?" ]; then
+  if [ "$kod" = "200" ] && [ -n "$uzak" ] && [ "$uzak" = "$yerel" ]; then
     say "  ok    $f ${uzak:0:10}"
   else
-    say "  FAIL  $f (uzak ${uzak:0:10} / yerel ${yerel:0:10})"
+    say "  FAIL  $f (uzak ${uzak:0:10} / yerel ${yerel:0:10}, HTTP $kod)"
     hata=1
   fi
 done
 for f in "${SILINEN[@]}"; do
-  if git cat-file -e "origin/$BRANCH:$f" 2>/dev/null; then
-    say "  FAIL  silinmedi: $f"
-    hata=1
-  else
+  yol=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' "$f")
+  kod=$(api GET "/contents/$yol?ref=$BRANCH" "$TMP/kontrol.json")
+  if [ "$kod" = "404" ]; then
     say "  ok    silindi: $f"
+  else
+    say "  FAIL  silinmedi: $f (HTTP $kod)"
+    hata=1
   fi
 done
 
