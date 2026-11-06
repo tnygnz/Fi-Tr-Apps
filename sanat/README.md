@@ -140,6 +140,23 @@ okuyucudaki karşılıkları için: **Erişilebilirlik**.
 | `app.js` | SRS, oturum akışı, ekranlar, yedekleme |
 | `tests/` | bağımlılıksız testler: `smoke.test.js`, `kbd-hint.test.js`, `run.js` |
 | `package.json` | yalnızca `npm test` → `node tests/run.js`; bağımlılık yok |
+| `imports/` | 26 kelime paketi (JSON): Samalla kartalla 1–3 bölüm/tema paketleri + kitap 3 kokoelması |
+
+## Kelime paketleri (`imports/`)
+
+`imports/` altında 26 JSON paketi durur: kitap 1 ve 2 için altı bölüm paketi,
+kitap 3 için on üç tema paketi ve bunların birleşimi olan
+`samalla-kartalla-3-kokoelma.json` (795 kelime). Her paket şu biçimde:
+
+```json
+{ "app": "suomi-tr", "pack": "…", "exportedAt": "…",
+  "state": { "cards": {}, "custom": [ { "fi": "…", "tr": "…", "lvl": "B1", "cat": "…" } ] } }
+```
+
+Bu dosyalar aynı adla canlı sitede de yayınlanır
+(`…/sanat/imports/<dosya>.json`) ve doğrudan indirilebilir. Bu uygulamanın
+kendi yedek biçimi farklıdır (`sanat.v1` durumu); **Yedek yükle** bu paketleri
+yüklemez, paketler eski `suomi-tr` uygulamasının içe aktarma biçimini taşır.
 
 ## Kelime ekleme
 
