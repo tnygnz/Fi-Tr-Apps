@@ -13,8 +13,18 @@ name: zip-ac
         type: string
         required: false
         default: ""
+      release_surum:
+        description: "Release etiketi (boşsa en son sürüm). Yalnızca release_dosya ile."
+        type: string
+        required: false
+        default: ""
+      release_dosya:
+        description: "Release ekinin adı; doluysa arşiv release'ten indirilir."
+        type: string
+        required: false
+        default: ""
       artifact_run_id:
-        description: "Zip artefaktını taşıyan çalışma (run) kimliği (zip_url boşsa kullanılır)."
+        description: "Zip artefaktını taşıyan çalışma (run) kimliği."
         type: string
         required: false
         default: ""
@@ -52,16 +62,22 @@ jobs:
       - name: Girdileri denetle
         env:
           ZIP_URL: ${{ inputs.zip_url }}
+          SURUM: ${{ inputs.release_surum }}
+          DOSYA: ${{ inputs.release_dosya }}
           RUN_ID: ${{ inputs.artifact_run_id }}
           HEDEF: ${{ inputs.hedef }}
         run: |
           set -euo pipefail
-          if [ -z "$ZIP_URL" ] && [ -z "$RUN_ID" ]; then
-            echo "::error::zip_url ya da artifact_run_id verilmeli."
+          kaynak=0
+          if [ -n "$ZIP_URL" ]; then kaynak=$((kaynak + 1)); fi
+          if [ -n "$DOSYA" ]; then kaynak=$((kaynak + 1)); fi
+          if [ -n "$RUN_ID" ]; then kaynak=$((kaynak + 1)); fi
+          if [ "$kaynak" -ne 1 ]; then
+            echo "::error::Tek bir kaynak verilmeli: zip_url, release_dosya ya da artifact_run_id."
             exit 2
           fi
-          if [ -n "$ZIP_URL" ] && [ -n "$RUN_ID" ]; then
-            echo "::error::zip_url ve artifact_run_id birlikte verilmemeli."
+          if [ -n "$SURUM" ] && [ -z "$DOSYA" ]; then
+            echo "::error::release_surum ancak release_dosya ile kullanılabilir."
             exit 2
           fi
           case "$HEDEF" in
@@ -86,8 +102,32 @@ jobs:
             -o "$RUNNER_TEMP/paket.zip" "$ZIP_URL"
           echo "indirildi: $(wc -c < "$RUNNER_TEMP/paket.zip") bayt"
 
+      - name: Zip'i indir (release)
+        if: inputs.release_dosya != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SURUM: ${{ inputs.release_surum }}
+          DOSYA: ${{ inputs.release_dosya }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release"
+          if [ -n "$SURUM" ]; then
+            gh release download "$SURUM" --repo "$GITHUB_REPOSITORY" \
+              --pattern "$DOSYA" --dir "$RUNNER_TEMP/release" --clobber
+          else
+            gh release download --repo "$GITHUB_REPOSITORY" \
+              --pattern "$DOSYA" --dir "$RUNNER_TEMP/release" --clobber
+          fi
+          mapfile -t bulunan < <(find "$RUNNER_TEMP/release" -type f -iname '*.zip' | sort)
+          if [ "${#bulunan[@]}" -ne 1 ]; then
+            echo "::error::Release'te tam olarak bir zip bekleniyordu; bulunan: ${#bulunan[@]}"
+            exit 1
+          fi
+          cp "${bulunan[0]}" "$RUNNER_TEMP/paket.zip"
+          echo "release: ${bulunan[0]}"
+
       - name: Zip'i indir (artefakt)
-        if: inputs.zip_url == '' && inputs.artifact_run_id != ''
+        if: inputs.artifact_run_id != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ inputs.artifact_run_id }}
