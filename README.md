@@ -40,10 +40,10 @@ itmesinde, haftalık olarak ve elle çalıştırıldığında iki şeyi denetler
 dosyalarının blob sha'sı yerelle birebir aynı mı. Aynı kod yerelde `tek.sh`
 5. adımında ve tek başına `python3 kontrol.py` ile çalışır.
 
-`Opin-Suomen` özel depo olduğu için `GITHUB_TOKEN` oraya erişemez. Üç depoyu da
-kapsamak için **Settings → Secrets → Actions → `KONTROL_TOKEN`** ekle
-(fine-grained PAT, üç depoya *Contents: Read*). Secret yoksa o depo "okunamadı"
-olarak raporlanır, iş kırılmaz.
+Üç depo da genel (public) olduğu için `GITHUB_TOKEN` üçünü de okur; **ek sır
+gerekmiyor**. Biri ileride özel yapılırsa CI onu "okunamadı (HTTP 404)" diye
+raporlar ve işi kırmaz — o durumda **Settings → Secrets → Actions →
+`KONTROL_TOKEN`** ekle (fine-grained PAT, üç depoya *Contents: Read*).
 
 ### Tek depo: `yayinla.sh`
 
