@@ -1798,9 +1798,11 @@
   var packAll = null;        // toplu ekleme: { i, toplam, eklenen, atlanan, hata }
   var packNote = "";
 
-  function packAdded(file) {
+  /* Daha önce eklenmiş paketin kaydı; yoksa null. Yeni kelime katmayan paket de
+     "eklendi" sayılır, yoksa satırda yeniden "Ekle" görünüyordu. */
+  function packRecord(file) {
     var rec = state.packs && state.packs[file];
-    return rec && rec.n ? rec.n : 0;
+    return (rec && typeof rec === "object") ? rec : null;
   }
 
   /* Liste ancak kullanıcı isterse indirilir: uygulama kendiliğinden ağa çıkmaz. */
@@ -1948,16 +1950,17 @@
       var toplam = 0;
       for (var i = 0; i < packIndex.length; i++) {
         var p = packIndex[i];
-        var ekli = packAdded(p.file);
+        var rec = packRecord(p.file);
+        var ekli = rec ? Math.max(0, Math.round(Number(rec.n) || 0)) : 0;
         toplam += p.count;
         satir += '<div class="row-item pack-row">' +
           '<div class="row-main"><b>' + esc(p.pack) + '</b>' +
             '<p class="muted small">' + p.count + ' kelime' + (p.lvl ? ' · ' + esc(p.lvl) : '') +
-              (ekli ? ' · eklendi: ' + ekli : '') + '</p></div>' +
+              (rec ? (ekli ? ' · eklendi: ' + ekli : ' · eklendi, yeni kelime yok') : '') + '</p></div>' +
           '<div class="row-side">' +
             '<button type="button" class="ghost-btn pack-add" data-pack="' + esc(p.file) + '"' +
               (packBusy === p.file || packAll ? ' disabled' : '') + '>' +
-              (packBusy === p.file ? 'Ekleniyor…' : ekli ? 'Yeniden' : 'Ekle') + '</button>' +
+              (packBusy === p.file ? 'Ekleniyor…' : rec ? 'Yeniden' : 'Ekle') + '</button>' +
           '</div>' +
         '</div>';
       }
