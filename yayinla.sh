@@ -18,6 +18,8 @@ set -uo pipefail
 REPO=${REPO:-tnygnz/suomi-kartat}
 BRANCH=${BRANCH:-main}
 DAL=${DAL:-sanat}
+# Yönetilen ek dosyalar (boşlukla ayrılmış, DAL dışında): ör. .github/workflows/zip-ac.yml
+EK=${EK:-}
 KURU=${KURU:-0}
 TEST_YOK=${TEST_YOK:-0}
 SILME_ONAY=${SILME_ONAY:-0}
@@ -81,13 +83,15 @@ TABAN=$(jget "$TMP/ref.json" "object.sha")
 kod=$(api GET "/git/trees/$TABAN?recursive=1" "$TMP/agac-uzak.json")
 [ "$kod" = "200" ] || die "uzak agac okunamadi (HTTP $kod): $(head -c 200 "$TMP/agac-uzak.json")" 2
 
-python3 - "$TMP/agac-uzak.json" "$DAL" >"$TMP/uzak.txt" <<'PY'
+python3 - "$TMP/agac-uzak.json" "$DAL" "$EK" >"$TMP/uzak.txt" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
 dal = sys.argv[2].rstrip("/") + "/"
+ek = [x for x in (sys.argv[3] if len(sys.argv) > 3 else "").split() if x]
 for e in d.get("tree", []):
-    if e.get("type") == "blob" and str(e.get("path", "")).startswith(dal):
-        print("%s\t%s" % (e["path"], e["sha"]))
+    yol = str(e.get("path", ""))
+    if e.get("type") == "blob" and (yol.startswith(dal) or yol in ek):
+        print("%s\t%s" % (yol, e["sha"]))
 PY
 
 # --- 2) degisen ve silinen dosyalar -------------------------------------
@@ -101,7 +105,7 @@ while IFS= read -r f; do
   [ -n "$f" ] && [ -f "$f" ] || continue
   yerel=$(git hash-object "$f" 2>/dev/null || echo "?")
   [ "${UZAK_SHA[$f]:-}" = "$yerel" ] || DEGISEN+=("$f")
-done < <(git ls-files --cached --others --exclude-standard -- "$DAL" | sort -u)
+done < <(git ls-files --cached --others --exclude-standard -- "$DAL" $EK | sort -u)
 
 SILINEN=()
 for yol in "${!UZAK_SHA[@]}"; do
@@ -278,6 +282,7 @@ if [ "$DOGRULA" = "1" ] && [ "${#DEGISEN[@]}" -gt 0 ]; then
   say ""
   say "Canli kontrol: $SAYFA (en fazla 120 sn)"
   for f in "${DEGISEN[@]}"; do
+    case "$f" in "$DAL"/*) ;; *) continue ;; esac
     goreli=${f#"$DAL"/}
     canli=0
     for _ in $(seq 1 12); do

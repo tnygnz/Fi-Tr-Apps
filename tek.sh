@@ -73,11 +73,11 @@ say "  bağlantılar: $(grep -o '?v=[a-z0-9]*' "$DAL/index.html" | sort -u | tr 
 
 # --- 3) kaynak depo -------------------------------------------------------
 adim "3/5 kaynak depo ($KAYNAK)"
-git add -A -- "$DAL" "$EK" tek.sh README.md
+git add -A -- "$DAL" "$EK" tek.sh yayinla.sh README.md
 if git diff --cached --quiet; then
   say "  commit gerektiren değişiklik yok"
 else
-  say "  değişen: $(git diff --cached --name-only -- "$DAL" "$EK" tek.sh README.md | tr '\n' ' ')"
+  say "  değişen: $(git diff --cached --name-only -- "$DAL" "$EK" tek.sh yayinla.sh README.md | tr '\n' ' ')"
   if [ "$KURU" = 1 ]; then
     git reset -q --
     say "  (kuru) commit ve push atlandı"
