@@ -1769,25 +1769,45 @@
   /* ------------------------------------------------------------------ */
 
   /* Paket kaydını uygulamanın kelime biçimine çevirir; zorunlu alan yoksa null. */
+  /* Paketler kategorileri küçük harfli Fince adlarla taşır ("aile", "fiiller"),
+     çekirdek sözlük ise Türkçe adlar kullanır ("Aile", "Fiiller"). Aynı konu
+     iki ayrı çip olarak durmasın diye eşlenir; eşlenmeyenler yeni kategori olur. */
+  var CAT_ALIAS = {
+    aile: "Aile", doga: "Doğa", ev: "Ev", fiiller: "Fiiller", okul: "Okul",
+    sayilar: "Sayılar", sehir: "Şehir", seyahat: "Seyahat", vucut: "Vücut",
+    sifat: "Sıfatlar", yemek: "Yiyecek", ilmaisut: "Kalıplar",
+    yhteiskunta: "Toplum", kultur: "Kültür", dilbilgisi: "Dilbilgisi"
+  };
+
+  function mapCat(cat) {
+    var raw = String(cat || "").trim();
+    if (!raw) return "Genel";
+    return CAT_ALIAS[raw.toLowerCase()] || raw;
+  }
+
   function packWord(raw) {
     if (!raw || typeof raw !== "object") return null;
     var fi = String(raw.fi || "").trim();
     var tr = String(raw.tr || "").trim();
     if (!fi || !tr) return null;
-    return { fi: fi, tr: tr, cat: String(raw.cat || "Genel").trim() || "Genel" };
+    return { fi: fi, tr: tr, cat: mapCat(raw.cat) };
   }
 
   /* Diskteki özel kelimeleri sözlüğe katar; aynı Fince kelime iki kez girmez. */
   function hydrateCustom() {
     var list = Array.isArray(state.custom) ? state.custom : [];
-    var added = 0;
+    var added = 0, fixed = 0;
     for (var i = 0; i < list.length; i++) {
       var w = packWord(list[i]);
-      if (!w || wordByFi(w.fi)) continue;
+      if (!w) continue;
+      /* Daha önce eklenmiş kelimenin kategorisi de yeni eşlemeye çekilir. */
+      if (list[i].cat !== w.cat) { list[i].cat = w.cat; fixed += 1; }
+      if (wordByFi(w.fi)) continue;
       WORDS.push(w);
       added += 1;
     }
     if (added) rebuildCats();
+    if (fixed) save();
     return added;
   }
 
