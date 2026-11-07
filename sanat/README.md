@@ -140,7 +140,7 @@ okuyucudaki karşılıkları için: **Erişilebilirlik**.
 | `app.js` | SRS, oturum akışı, ekranlar, yedekleme |
 | `tests/` | bağımlılıksız testler: `smoke.test.js`, `kbd-hint.test.js`, `run.js` |
 | `package.json` | yalnızca `npm test` → `node tests/run.js`; bağımlılık yok |
-| `imports/` | 26 kelime paketi (JSON): Samalla kartalla 1–3 bölüm/tema paketleri + kitap 3 kokoelması |
+| `imports/` | 26 kelime paketi (JSON) + `index.json` listesi: Samalla kartalla 1–3 bölüm/tema paketleri + kitap 3 kokoelması |
 
 ## Kelime paketleri (`imports/`)
 
@@ -154,9 +154,12 @@ kitap 3 için on üç tema paketi ve bunların birleşimi olan
 ```
 
 Bu dosyalar aynı adla canlı sitede de yayınlanır
-(`…/sanat/imports/<dosya>.json`) ve doğrudan indirilebilir. Bu uygulamanın
-kendi yedek biçimi farklıdır (`sanat.v1` durumu); **Yedek yükle** bu paketleri
-yüklemez, paketler eski `suomi-tr` uygulamasının içe aktarma biçimini taşır.
+(`…/sanat/imports/<dosya>.json`) ve doğrudan indirilebilir. `index.json` paket
+adlarını, kelime sayılarını ve düzeylerini taşır; uygulamadaki **Paketler**
+sekmesi bu listeyi yalnızca düğmeye basıldığında indirir, seçilen paketi
+`state.custom` içine katar ve `sanat.v1` kaydına yazar (aynı Fince kelime ikinci
+kez girmez). Bu uygulamanın kendi yedek biçimi farklıdır (`sanat.v1` durumu);
+**Yedek yükle** yalnızca kendi yedeğini okur, ham paket dosyalarını yüklemez.
 
 ## Kelime ekleme
 

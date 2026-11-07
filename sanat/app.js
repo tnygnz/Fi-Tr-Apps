@@ -11,12 +11,18 @@
   /* Telaffuz puanı bunun altında kalan kelime "zayıf telaffuz" listesine girer. */
   var PRON_WEAK = 60;
   var CATS = [];
-  WORDS.forEach(function (w) { if (CATS.indexOf(w.cat) === -1) CATS.push(w.cat); });
+  /* Kategoriler sözlükten türetilir; paket eklenince yeniden kurulur. */
+  function rebuildCats() {
+    CATS.length = 0;
+    WORDS.forEach(function (w) { if (w.cat && CATS.indexOf(w.cat) === -1) CATS.push(w.cat); });
+  }
+  rebuildCats();
 
   var app = document.getElementById("app");
   var toastEl = document.getElementById("toast");
 
   var state = load();
+  hydrateCustom();   // paketlerden eklenmiş kelimeler sözlüğe katılır
   var session = null;       // { mode, queue, i, ok, bad, dir, revealed, locked, feedback }
   var tab = "study";
   var listQuery = "";
@@ -70,7 +76,7 @@
   /* Ekran okuyucu duyurusu: tüm ekranı canlı bölge yapmak yerine tek satır.
      Kısa, tek bir bilgi taşır; kart metni, cevap ve sonuç ayrı ayrı söylenir. */
   var srStatusEl = document.getElementById("srStatus");
-  var TAB_LABELS = { study: "Çalış", list: "Liste", tips: "İpuçları", stats: "İstatistik" };
+  var TAB_LABELS = { study: "Çalış", list: "Liste", packs: "Paketler", tips: "İpuçları", stats: "İstatistik" };
   /* Satır içi SVG ikon seti: index.html içindeki <symbol> tanımlarına başvurur.
      Emoji yerine geçer; renk ve kalınlık CSS'ten (currentColor) gelir. */
   function ico(name, cls) {
@@ -152,6 +158,8 @@
     return {
       settings: { direction: "fi-tr", goal: 20, pronGoal: 5 },
       cards: {},
+      custom: [],
+      packs: {},
       history: {},
       pron: {},
       pronLog: [],
@@ -174,6 +182,8 @@
         var p = JSON.parse(raw);
         s.settings = Object.assign({ direction: "fi-tr", goal: 20, pronGoal: 5 }, p.settings || {});
         s.cards = p.cards || {};
+        s.custom = Array.isArray(p.custom) ? p.custom.slice(0, 20000) : [];
+        s.packs = (p.packs && typeof p.packs === "object") ? p.packs : {};
         s.history = p.history || {};
         s.pron = p.pron || {};
         s.pronLog = Array.isArray(p.pronLog) ? p.pronLog.slice(-400) : [];
@@ -1716,6 +1726,8 @@
           var s = freshState();
           s.settings = Object.assign({ direction: "fi-tr", goal: 20, pronGoal: 5 }, p.settings || {});
           s.cards = p.cards || {};
+          s.custom = Array.isArray(p.custom) ? p.custom.slice(0, 20000) : [];
+          s.packs = (p.packs && typeof p.packs === "object") ? p.packs : {};
           s.history = p.history || {};
           s.pron = p.pron || {};
           s.pronLog = Array.isArray(p.pronLog) ? p.pronLog.slice(-400) : [];
@@ -1731,6 +1743,7 @@
           save();
           paintStreak();
           refreshPronRun();
+          hydrateCustom();
           renderTab();
           toast("Yedek yüklendi");
         } catch (e) {
@@ -1751,9 +1764,173 @@
     if (el) el.textContent = state.streak.days;
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Kelime paketleri                                                   */
+  /* ------------------------------------------------------------------ */
+
+  /* Paket kaydını uygulamanın kelime biçimine çevirir; zorunlu alan yoksa null. */
+  function packWord(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var fi = String(raw.fi || "").trim();
+    var tr = String(raw.tr || "").trim();
+    if (!fi || !tr) return null;
+    return { fi: fi, tr: tr, cat: String(raw.cat || "Genel").trim() || "Genel" };
+  }
+
+  /* Diskteki özel kelimeleri sözlüğe katar; aynı Fince kelime iki kez girmez. */
+  function hydrateCustom() {
+    var list = Array.isArray(state.custom) ? state.custom : [];
+    var added = 0;
+    for (var i = 0; i < list.length; i++) {
+      var w = packWord(list[i]);
+      if (!w || wordByFi(w.fi)) continue;
+      WORDS.push(w);
+      added += 1;
+    }
+    if (added) rebuildCats();
+    return added;
+  }
+
+  var packIndex = null;      // [{ file, pack, count, lvl }]
+  var packStatus = "idle";   // idle | loading | ready | error
+  var packError = "";
+  var packBusy = "";         // şu an eklenen dosya
+  var packNote = "";
+
+  function packAdded(file) {
+    var rec = state.packs && state.packs[file];
+    return rec && rec.n ? rec.n : 0;
+  }
+
+  /* Liste ancak kullanıcı isterse indirilir: uygulama kendiliğinden ağa çıkmaz. */
+  function loadPackIndex() {
+    if (packStatus === "loading") return;
+    packStatus = "loading";
+    packError = "";
+    renderTab();
+    fetch("imports/index.json", { cache: "no-cache" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        var list = Array.isArray(data) ? data : (data && Array.isArray(data.packs) ? data.packs : []);
+        packIndex = [];
+        for (var i = 0; i < list.length; i++) {
+          var p = list[i] || {};
+          var file = String(p.file || "").trim();
+          if (!file) continue;
+          packIndex.push({
+            file: file,
+            pack: String(p.pack || file).trim(),
+            count: Math.max(0, Math.round(Number(p.count) || 0)),
+            lvl: String(p.lvl || "").trim()
+          });
+        }
+        packStatus = "ready";
+        renderTab();
+        announce(packIndex.length + " paket listelendi");
+      })
+      .catch(function (e) {
+        packStatus = "error";
+        packError = (e && e.message) ? e.message : "ağ hatası";
+        renderTab();
+      });
+  }
+
+  /* Tek paket: indir, doğrula, sözlüğe kat, kaydet. Aynı kelime ikinci kez girmez. */
+  function importPack(file) {
+    if (!file || packBusy) return;
+    packBusy = file;
+    packNote = "";
+    renderTab();
+    fetch("imports/" + file, { cache: "no-cache" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || data.app !== "suomi-tr" || !data.state || !Array.isArray(data.state.custom)) {
+          throw new Error("beklenmeyen dosya biçimi");
+        }
+        if (!Array.isArray(state.custom)) state.custom = [];
+        if (!state.packs || typeof state.packs !== "object") state.packs = {};
+        var eklenen = 0, atlanan = 0;
+        for (var i = 0; i < data.state.custom.length; i++) {
+          var w = packWord(data.state.custom[i]);
+          if (!w) continue;
+          if (wordByFi(w.fi)) { atlanan += 1; continue; }
+          WORDS.push(w);
+          state.custom.push(w);
+          eklenen += 1;
+        }
+        rebuildCats();
+        state.packs[file] = { n: eklenen, at: dayKey() };
+        save();
+        packBusy = "";
+        var ad = String(data.pack || file);
+        packNote = ad + " · " + (eklenen
+          ? eklenen + " kelime eklendi" + (atlanan ? " · " + atlanan + " zaten vardı" : "")
+          : "yeni kelime yok (" + atlanan + " zaten vardı)");
+        toast(eklenen ? eklenen + " kelime eklendi" : "Yeni kelime yok");
+        renderTab();
+      })
+      .catch(function (e) {
+        packBusy = "";
+        packNote = file + " eklenemedi: " + ((e && e.message) ? e.message : "ağ hatası");
+        renderTab();
+      });
+  }
+
+  function renderPacks() {
+    var html = '<section class="pad packs">' +
+      '<h2 class="section-title">Kelime paketleri</h2>' +
+      '<p class="muted">Paketler uygulamanın yanında durur; liste yalnızca istediğinde indirilir ve eklenen kelimeler bu tarayıcıda saklanır. Uygulama kendiliğinden ağ isteği yapmaz.</p>';
+
+    if (packStatus === "loading") {
+      html += '<div class="card"><p class="muted">Paket listesi indiriliyor…</p></div>';
+    } else if (packStatus === "error") {
+      html += '<div class="card"><p class="muted">Paket listesi alınamadı (' + esc(packError) + ').</p>' +
+        '<button type="button" class="primary wide" data-action="packs-load">Tekrar dene</button></div>';
+    } else if (packStatus === "ready" && packIndex && packIndex.length) {
+      var satir = "";
+      var toplam = 0;
+      for (var i = 0; i < packIndex.length; i++) {
+        var p = packIndex[i];
+        var ekli = packAdded(p.file);
+        toplam += p.count;
+        satir += '<div class="row-item pack-row">' +
+          '<div class="row-main"><b>' + esc(p.pack) + '</b>' +
+            '<p class="muted small">' + p.count + ' kelime' + (p.lvl ? ' · ' + esc(p.lvl) : '') +
+              (ekli ? ' · eklendi: ' + ekli : '') + '</p></div>' +
+          '<div class="row-side">' +
+            '<button type="button" class="ghost-btn pack-add" data-pack="' + esc(p.file) + '"' +
+              (packBusy === p.file ? ' disabled' : '') + '>' +
+              (packBusy === p.file ? 'Ekleniyor…' : ekli ? 'Yeniden' : 'Ekle') + '</button>' +
+          '</div>' +
+        '</div>';
+      }
+      html += '<p class="muted small">' + packIndex.length + ' paket · toplam ' + toplam + ' kelime</p>' +
+        (packNote ? '<p class="pack-note" role="status">' + esc(packNote) + '</p>' : '') +
+        '<div class="rows">' + satir + '</div>';
+    } else if (packStatus === "ready") {
+      html += '<div class="card"><p class="muted">Paket listesi boş.</p></div>';
+    } else {
+      html += '<div class="card"><p class="muted">Kitap 1–2 bölümleri, kitap 3 temaları ve kokoelma: 26 paket.</p>' +
+        '<button type="button" class="primary wide" data-action="packs-load">Paketleri getir</button></div>' +
+        (packNote ? '<p class="pack-note" role="status">' + esc(packNote) + '</p>' : '');
+    }
+
+    var eklenen = Array.isArray(state.custom) ? state.custom.length : 0;
+    html += '<p class="muted small">Bu tarayıcıya eklenen kelime: ' + eklenen +
+      ' · sözlük toplamı: ' + WORDS.length + '</p>';
+    app.innerHTML = html + "</section>";
+  }
+
   function renderTab() {
     if (tab === "study") renderStudy();
     else if (tab === "list") renderList();
+    else if (tab === "packs") renderPacks();
     else if (tab === "tips") renderTips();
     else renderStats();
     applyNoteCelebration();
@@ -1831,6 +2008,9 @@
       if (w) speak(lang === "tr-TR" ? w.tr : w.fi, lang);
       return;
     }
+
+    var packBtn = t.closest("[data-pack]");
+    if (packBtn) { importPack(packBtn.getAttribute("data-pack")); return; }
 
     var action = t.closest("[data-action]") && t.closest("[data-action]").getAttribute("data-action");
     if (action) {
@@ -1915,6 +2095,7 @@
         startSession("telaffuz", queue);
         return;
       }
+      if (action === "packs-load") { loadPackIndex(); return; }
       if (action === "export") { exportData(); return; }
       if (action === "import") { importData(); return; }
       if (action === "reset") {
