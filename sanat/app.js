@@ -1795,6 +1795,7 @@
   var packStatus = "idle";   // idle | loading | ready | error
   var packError = "";
   var packBusy = "";         // şu an eklenen dosya
+  var packAll = null;        // toplu ekleme: { i, toplam, eklenen, atlanan, hata }
   var packNote = "";
 
   function packAdded(file) {
@@ -1850,35 +1851,85 @@
         return r.json();
       })
       .then(function (data) {
-        if (!data || data.app !== "suomi-tr" || !data.state || !Array.isArray(data.state.custom)) {
-          throw new Error("beklenmeyen dosya biçimi");
-        }
-        if (!Array.isArray(state.custom)) state.custom = [];
-        if (!state.packs || typeof state.packs !== "object") state.packs = {};
-        var eklenen = 0, atlanan = 0;
-        for (var i = 0; i < data.state.custom.length; i++) {
-          var w = packWord(data.state.custom[i]);
-          if (!w) continue;
-          if (wordByFi(w.fi)) { atlanan += 1; continue; }
-          WORDS.push(w);
-          state.custom.push(w);
-          eklenen += 1;
-        }
-        rebuildCats();
-        state.packs[file] = { n: eklenen, at: dayKey() };
-        save();
+        var s = mergePack(data, file);
         packBusy = "";
         var ad = String(data.pack || file);
-        packNote = ad + " · " + (eklenen
-          ? eklenen + " kelime eklendi" + (atlanan ? " · " + atlanan + " zaten vardı" : "")
-          : "yeni kelime yok (" + atlanan + " zaten vardı)");
-        toast(eklenen ? eklenen + " kelime eklendi" : "Yeni kelime yok");
+        packNote = ad + " · " + (s.eklenen
+          ? s.eklenen + " kelime eklendi" + (s.atlanan ? " · " + s.atlanan + " zaten vardı" : "")
+          : "yeni kelime yok (" + s.atlanan + " zaten vardı)");
+        toast(s.eklenen ? s.eklenen + " kelime eklendi" : "Yeni kelime yok");
         renderTab();
       })
       .catch(function (e) {
         packBusy = "";
         packNote = file + " eklenemedi: " + ((e && e.message) ? e.message : "ağ hatası");
         renderTab();
+      });
+  }
+
+  /* Paket verisini doğrulayıp sözlüğe katar; tek paket ve toplu ekleme bunu kullanır. */
+  function mergePack(data, file) {
+    if (!data || data.app !== "suomi-tr" || !data.state || !Array.isArray(data.state.custom)) {
+      throw new Error("beklenmeyen dosya biçimi");
+    }
+    if (!Array.isArray(state.custom)) state.custom = [];
+    if (!state.packs || typeof state.packs !== "object") state.packs = {};
+    var eklenen = 0, atlanan = 0;
+    for (var i = 0; i < data.state.custom.length; i++) {
+      var w = packWord(data.state.custom[i]);
+      if (!w) continue;
+      if (wordByFi(w.fi)) { atlanan += 1; continue; }
+      WORDS.push(w);
+      state.custom.push(w);
+      eklenen += 1;
+    }
+    rebuildCats();
+    state.packs[file] = { n: eklenen, at: dayKey() };
+    save();
+    return { eklenen: eklenen, atlanan: atlanan };
+  }
+
+  /* Sırayla tüm paketleri ekler: tek istek uçar, bitince sıradaki başlar. */
+  function importAllPacks() {
+    if (!packIndex || !packIndex.length || packAll || packBusy) return;
+    packAll = { i: 0, toplam: packIndex.length, eklenen: 0, atlanan: 0, hata: "" };
+    packNote = "";
+    renderTab();
+    nextPackInAll();
+  }
+
+  function nextPackInAll() {
+    if (!packAll) return;
+    if (packAll.i >= packAll.toplam) {
+      var ozet = packAll;
+      packAll = null;
+      packNote = "Tümü eklendi: " + ozet.toplam + " paket · " + ozet.eklenen + " kelime eklendi" +
+        (ozet.atlanan ? " · " + ozet.atlanan + " zaten vardı" : "") +
+        (ozet.hata ? " · atlandı — " + ozet.hata : "");
+      toast(ozet.eklenen ? ozet.eklenen + " kelime eklendi" : "Yeni kelime yok");
+      renderTab();
+      announce(packNote);
+      return;
+    }
+    var p = packIndex[packAll.i];
+    packNote = "Ekleniyor " + (packAll.i + 1) + "/" + packAll.toplam + " · " + p.pack;
+    renderTab();
+    fetch("imports/" + p.file, { cache: "no-cache" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        var s = mergePack(data, p.file);
+        packAll.eklenen += s.eklenen;
+        packAll.atlanan += s.atlanan;
+        packAll.i += 1;
+        nextPackInAll();
+      })
+      .catch(function (e) {
+        packAll.hata = p.file + ": " + ((e && e.message) ? e.message : "ağ hatası");
+        packAll.i += 1;
+        nextPackInAll();
       });
   }
 
@@ -1905,13 +1956,19 @@
               (ekli ? ' · eklendi: ' + ekli : '') + '</p></div>' +
           '<div class="row-side">' +
             '<button type="button" class="ghost-btn pack-add" data-pack="' + esc(p.file) + '"' +
-              (packBusy === p.file ? ' disabled' : '') + '>' +
+              (packBusy === p.file || packAll ? ' disabled' : '') + '>' +
               (packBusy === p.file ? 'Ekleniyor…' : ekli ? 'Yeniden' : 'Ekle') + '</button>' +
           '</div>' +
         '</div>';
       }
       html += '<p class="muted small">' + packIndex.length + ' paket · toplam ' + toplam + ' kelime</p>' +
         (packNote ? '<p class="pack-note" role="status">' + esc(packNote) + '</p>' : '') +
+        '<button type="button" class="primary wide" data-action="packs-all"' +
+          (packAll || packBusy ? ' disabled' : '') + '>' +
+          (packAll
+            ? 'Ekleniyor ' + packAll.i + '/' + packAll.toplam + '…'
+            : 'Tümünü ekle (' + packIndex.length + ' paket)') +
+        '</button>' +
         '<div class="rows">' + satir + '</div>';
     } else if (packStatus === "ready") {
       html += '<div class="card"><p class="muted">Paket listesi boş.</p></div>';
@@ -2096,6 +2153,7 @@
         return;
       }
       if (action === "packs-load") { loadPackIndex(); return; }
+      if (action === "packs-all") { importAllPacks(); return; }
       if (action === "export") { exportData(); return; }
       if (action === "import") { importData(); return; }
       if (action === "reset") {
