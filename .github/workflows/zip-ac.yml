@@ -1,9 +1,14 @@
 name: zip-ac
 
-# Zip depoya hiç girmez: arşiv ya doğrudan bir https adresinden ya da önceki bir
-# çalışmanın artefaktından indirilir, yalnızca $RUNNER_TEMP altında açılır ve
-# hedef dizine kopyalanır. Kullanılan zip, izlenebilirlik için artefakt olarak
-# saklanır; çalışma ağacına .zip yazılmaz.
+# Zip depoya hiç girmez: arşiv ya doğrudan bir https adresinden, ya bir release
+# ekinden, ya da önceki bir çalışmanın artefaktından indirilir; yalnızca
+# $RUNNER_TEMP altında açılır ve hedef dizine kopyalanır. Kullanılan zip,
+# izlenebilirlik için artefakt olarak saklanır; çalışma ağacına .zip yazılmaz.
+#
+# Tek iş akışı iki tasarımı birleştirir: hedef dizin (varsayılan sanat), release
+# ve artefakt desteği korunur; üstüne sertleştirme eklenir — arşiv bütünlüğü,
+# yol kaçışı (zip-slip) ve sembolik bağ reddi, .git ve .github/workflows
+# dışlama, eşzamanlılık kilidi.
 
 'on':
   workflow_dispatch:
@@ -158,8 +163,13 @@ jobs:
             exit 1
           fi
           unzip -t "$z" > /dev/null || { echo "::error::Zip bozuk (unzip -t başarısız)."; exit 1; }
-          if unzip -Z1 "$z" | grep -Eq '^/|^[A-Za-z]:|(^|/)\.\.(/|$)'; then
-            echo "::error::Zip mutlak yol ya da .. içeriyor; güvenlik için durduruldu."
+          if unzip -Z1 "$z" | grep -Eq '^/|^[A-Za-z]:|(^|/)\.\.(/|$)|\\'; then
+            echo "::error::Zip mutlak yol, .. ya da ters bölü içeriyor; güvenlik için durduruldu."
+            unzip -Z1 "$z" | grep -En '^/|^[A-Za-z]:|(^|/)\.\.(/|$)|\\' | head -5
+            exit 1
+          fi
+          if unzip -Z1 "$z" | grep -Eq '(^|/)\.github/workflows(/|$)'; then
+            echo "::error::Zip .github/workflows içeriyor; iş akışları zip ile değiştirilemez."
             exit 1
           fi
           echo "doğrulandı: $boyut bayt, $(unzip -Z1 "$z" | wc -l) girdi"
@@ -179,6 +189,12 @@ jobs:
           rm -rf "$src"
           mkdir -p "$src"
           unzip -q -o "$RUNNER_TEMP/paket.zip" -d "$src"
+          # Sembolik bağ taşınmaz: hedef depoyu dışarıya bağlayan girdi kabul edilmez.
+          if find "$src" -type l -print -quit | grep -q .; then
+            echo "::error::Arşivde sembolik bağ var; güvenlik için durduruldu."
+            find "$src" -type l | head -5
+            exit 1
+          fi
           # Arşiv tek bir üst dizin taşıyor ve adı hedefle aynıysa içine in.
           mapfile -t ust < <(find "$src" -mindepth 1 -maxdepth 1)
           if [ "${#ust[@]}" -eq 1 ] && [ -d "${ust[0]}" ] \
@@ -193,7 +209,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$hedef"
-          tar -C "$SRC" -cf - --exclude=.git . | tar -C "$hedef" -xf -
+          # .git ve iş akışları hiçbir koşulda kopyalanmaz; sembolik bağ taşınmaz.
+          rsync -a --no-links \
+            --exclude='.git/' \
+            --exclude='.github/workflows/' \
+            "$SRC"/ "$hedef"/
           rm -rf "$hedef/.git"
           if find "$hedef" -name '*.zip' -newermt '-1 hour' | grep -q .; then
             echo "::error::Zip içeriği hedef dizine zip dosyası bıraktı; durduruldu."
@@ -228,7 +248,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           ileti="${MESAJ:-zip-ac: $hedef içeriği zip arşivinden güncellendi}"
           git commit -m "$ileti"
-          git push
+          git push origin "HEAD:${GITHUB_REF_NAME:-main}"
 
       - name: Özet
         if: always()

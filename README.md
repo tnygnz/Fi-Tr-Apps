@@ -8,12 +8,33 @@ Canlı: <https://tnygnz.github.io/suomi-kartat/sanat/>
 
 ## Yayınlama
 
-Depo kökünde tek komut:
+Depo kökünde tek komut — test, sürüm damgası, üç depo ve doğrulama:
 
 ```bash
-./yayinla.sh "sanat: kısa değişiklik özeti"
+./tek.sh "sanat: kısa değişiklik özeti"
 ```
 
+`tek.sh` sırayla: (1) `node sanat/tests/run.js` — kırıksa hiçbir yere yazmaz;
+(2) `index.html` içindeki `?v=` damgasını `app.js`+`styles.css`+`data.js`
+içeriğinden türetir (aynı içerik → aynı damga, tekrar koşmak yeni commit
+üretmez); (3) yerel commit + `git push origin main`; (4) `suomi-kartat` ve
+`Opin-Suomen` deposuna aynı ağacı (uygulama + `zip-ac.yml`) tek commit olarak
+yazar; (5) üç deponun blob sha'larını yerelle karşılaştırır.
+
+| Komut | Ne yapar |
+|---|---|
+| `./tek.sh "mesaj"` | üç depoyu yayımlar |
+| `KURU=1 ./tek.sh "mesaj"` | yazmadan planı gösterir |
+| `DOGRULA=1 ./tek.sh "mesaj"` | yayından sonra canlı baytları da bekler |
+
+Sürüm damgası neden gerekli: GitHub Pages varlıkları
+`cache-control: max-age=600` ile sunuluyor ve URL'de sürüm yoktu; yeni HTML eski
+`app.js` ile eşleşince "Paketler" sekmesi boş görünebiliyordu. Damga varlık
+URL'sini içeriğe bağlar, eski/yeni karışması olamaz.
+
+### Tek depo: `yayinla.sh`
+
+`tek.sh` aynaları bu betikle yayımlar; tek depoya elle yayın için de kullanılır.
 Betik sırayla:
 
 1. `node sanat/tests/run.js` — testler kırıksa yayın yapılmaz (`TEST_YOK=1` ile atlanır).
