@@ -35,7 +35,6 @@ SAYFA=${SAYFA:-https://tnygnz.github.io/suomi-kartat/sanat/}
 KURU=${KURU:-0}
 DOGRULA=${DOGRULA:-0}
 MSG=${1:-${MSG:-"sanat: yayın"}}
-KONTROL=("$DAL/app.js" "$DAL/styles.css" "$DAL/data.js" "$DAL/index.html" "$DAL/imports/index.json" "$EK")
 
 say() { printf '%s\n' "$*"; }
 adim() { printf '\n▸ %s\n' "$*"; }
@@ -45,7 +44,7 @@ for a in git node python3 curl; do
   command -v "$a" >/dev/null 2>&1 || die "$a bulunamadı" 2
 done
 [ -d "$DAL" ] || die "$DAL dizini yok" 2
-for f in "${KONTROL[@]}"; do [ -f "$f" ] || die "eksik dosya: $f" 2; done
+[ -f kontrol.py ] || die "kontrol.py yok" 2
 
 # --- 1) test kapısı -------------------------------------------------------
 adim "1/5 testler ($DAL/tests/run.js)"
@@ -73,11 +72,11 @@ say "  bağlantılar: $(grep -o '?v=[a-z0-9]*' "$DAL/index.html" | sort -u | tr 
 
 # --- 3) kaynak depo -------------------------------------------------------
 adim "3/5 kaynak depo ($KAYNAK)"
-git add -A -- "$DAL" "$EK" tek.sh yayinla.sh README.md
+git add -A -- "$DAL" "$EK" tek.sh yayinla.sh kontrol.py .github/workflows/kontrol.yml README.md
 if git diff --cached --quiet; then
   say "  commit gerektiren değişiklik yok"
 else
-  say "  değişen: $(git diff --cached --name-only -- "$DAL" "$EK" tek.sh yayinla.sh README.md | tr '\n' ' ')"
+  say "  değişen: $(git diff --cached --name-only -- "$DAL" "$EK" tek.sh yayinla.sh kontrol.py .github/workflows/kontrol.yml README.md | tr '\n' ' ')"
   if [ "$KURU" = 1 ]; then
     git reset -q --
     say "  (kuru) commit ve push atlandı"
@@ -118,27 +117,14 @@ for r in $AYNALAR; do
 done
 
 # --- 5) doğrulama ---------------------------------------------------------
-adim "5/5 doğrulama"
+adim "5/5 doğrulama (kontrol.py — CI ile aynı betik)"
 if [ "$KURU" = 1 ]; then
-  say "  (kuru) uzak karşılaştırma atlandı; dosyalar: ${#KONTROL[@]}"
+  say "  (kuru) damga ve uzak karşılaştırma atlandı"
 else
   [ -n "${GH_TOKEN:-}" ] || { GH_TOKEN=$(gh auth token 2>/dev/null || true); export GH_TOKEN; }
-  hata=0
-  for r in "$KAYNAK" $AYNALAR; do
-    uyan=0; eksik=""
-    for f in "${KONTROL[@]}"; do
-      yerel=$(git hash-object "$f")
-      uzak=$(gh api "repos/$r/contents/$f?ref=$BRANCH" --jq '.sha' 2>/dev/null || true)
-      if [ "$uzak" = "$yerel" ]; then uyan=$((uyan + 1)); else eksik="$eksik $f"; fi
-    done
-    if [ "$uyan" -eq "${#KONTROL[@]}" ]; then
-      say "  ok    $r — ${uyan}/${#KONTROL[@]} dosya birebir aynı"
-    else
-      say "  FAIL  $r — $uyan/${#KONTROL[@]} aynı; fark:$eksik"
-      hata=1
-    fi
-  done
-  [ "$hata" -eq 0 ] || die "depolar arasında fark var (yukarıdaki FAIL satırları)"
+  [ -n "${GH_TOKEN:-}" ] || die "GH_TOKEN yok: 'gh auth login' ya da GH_TOKEN ortam değişkeni"
+  TOKEN="$GH_TOKEN" KAYNAK="$KAYNAK" AYNALAR="$AYNALAR" BRANCH="$BRANCH" DAL="$DAL" EK="$EK" \
+    python3 kontrol.py || die "damga ya da depo eşitliği bozuk (yukarıdaki satırlar)"
 fi
 
 # --- canlı kontrol (isteğe bağlı) -----------------------------------------

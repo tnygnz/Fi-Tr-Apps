@@ -1,0 +1,71 @@
+name: kontrol
+
+# Sürüm damgası ve üç depo eşitliği denetimi.
+#
+# - damga: sanat/index.html içindeki ?v= değeri app.js+styles.css+data.js
+#   içeriğinden türetilen sha256 ile aynı mı (eski damga = yeni HTML + eski
+#   app.js karışması, "Paketler" boş görünür),
+# - eşitlik: kaynak (Fi-Tr-Apps) ve aynalar (suomi-kartat, Opin-Suomen)
+#   depolarda kontrol dosyalarının blob sha'sı yerelle birebir aynı mı.
+#
+# Yerelde aynı denetim: ./tek.sh (5. adım) · tek başına: python3 kontrol.py
+#
+# Opin-Suomen özel depo: GITHUB_TOKEN oraya erişemez. Üç depoyu da kapsamak için
+# Settings → Secrets → Actions → KONTROL_TOKEN ekle (fine-grained PAT, üç depoya
+# Contents: Read). Secret yoksa o depo "okunamadı" olarak raporlanır, iş kırılmaz.
+
+'on':
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'sanat/**'
+      - 'kontrol.py'
+      - '.github/workflows/kontrol.yml'
+  pull_request:
+    paths:
+      - 'sanat/**'
+      - 'kontrol.py'
+  schedule:
+    # Pazartesi 04:00 UTC: aynalar başka bir yerden değiştirilmişse yakalar.
+    - cron: '0 4 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kontrol-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  denetle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+
+      - name: Node kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Testler
+        run: node sanat/tests/run.js
+
+      - name: Damga ve depo eşitliği
+        env:
+          TOKEN: ${{ secrets.KONTROL_TOKEN || secrets.GITHUB_TOKEN }}
+          KAYNAK: ${{ github.repository }}
+          AYNALAR: tnygnz/suomi-kartat tnygnz/Opin-Suomen
+          BRANCH: main
+        run: |
+          set -o pipefail
+          python3 kontrol.py
+
+      - name: Özet
+        if: always()
+        run: |
+          echo "### kontrol" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- damga ve depo eşitliği: yukarıdaki adım" >> "$GITHUB_STEP_SUMMARY"
+          echo "- yerel eşdeğeri: \`./tek.sh \"mesaj\"\` (5. adım)" >> "$GITHUB_STEP_SUMMARY"
