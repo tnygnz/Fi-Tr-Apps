@@ -22,7 +22,6 @@
   var toastEl = document.getElementById("toast");
 
   var state = load();
-  hydrateCustom();   // paketlerden eklenmiş kelimeler sözlüğe katılır
   var session = null;       // { mode, queue, i, ok, bad, dir, revealed, locked, feedback }
   var tab = "study";
   var listQuery = "";
@@ -2405,6 +2404,8 @@
   paintStreak();
   refreshPronRun();
   maybeDayNote();
+  /* Açılış sırasının sonunda: kategori eşleme tablosu (CAT_ALIAS) bu noktada hazır. */
+  hydrateCustom();   // paketlerden eklenmiş kelimeler sözlüğe katılır
   renderTab();
   startDayWatch();
 })();
