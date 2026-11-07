@@ -32,6 +32,19 @@ Sürüm damgası neden gerekli: GitHub Pages varlıkları
 `app.js` ile eşleşince "Paketler" sekmesi boş görünebiliyordu. Damga varlık
 URL'sini içeriğe bağlar, eski/yeni karışması olamaz.
 
+### Denetim (CI)
+
+[`.github/workflows/kontrol.yml`](.github/workflows/kontrol.yml) her `sanat/**`
+itmesinde, haftalık olarak ve elle çalıştırıldığında iki şeyi denetler:
+`index.html` içindeki `?v=` damgası içerikle aynı mı, ve üç depoda kontrol
+dosyalarının blob sha'sı yerelle birebir aynı mı. Aynı kod yerelde `tek.sh`
+5. adımında ve tek başına `python3 kontrol.py` ile çalışır.
+
+`Opin-Suomen` özel depo olduğu için `GITHUB_TOKEN` oraya erişemez. Üç depoyu da
+kapsamak için **Settings → Secrets → Actions → `KONTROL_TOKEN`** ekle
+(fine-grained PAT, üç depoya *Contents: Read*). Secret yoksa o depo "okunamadı"
+olarak raporlanır, iş kırılmaz.
+
 ### Tek depo: `yayinla.sh`
 
 `tek.sh` aynaları bu betikle yayımlar; tek depoya elle yayın için de kullanılır.
