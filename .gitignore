@@ -5,6 +5,10 @@ cert/
 # Üretilen git format-patch dosyaları — depoya girmez
 patches/
 
+# Python derleme önbelleği (kontrol.py) — depoya girmez
+__pycache__/
+*.pyc
+
 # Freebuff çalışma alanı artıkları — depoya girmez (yerel üretim çıktıları)
 PUSH.md
 actions-sim.sh
